@@ -1,69 +1,198 @@
-import Image from "next/image";
+"use client"
+
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Briefcase, Calendar, Brain, Zap, ArrowRight } from "lucide-react"
+import { motion } from "framer-motion"
 
 export default function Home() {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  }
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { duration: 0.5 }
+    }
+  }
+
+  const featureVariants = {
+    hidden: { scale: 0.9, opacity: 0 },
+    visible: {
+      scale: 1,
+      opacity: 1,
+      transition: { duration: 0.5 }
+    }
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="flex flex-col flex-1 bg-gradient-to-b from-background to-secondary/20">
+      <main className="flex-1">
+        <motion.section 
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+          className="container mx-auto px-4 py-20 text-center"
+        >
+          <motion.div variants={itemVariants} className="max-w-4xl mx-auto">
+            <motion.h1 
+              className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent"
+              initial={{ y: -30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              PlaceMate AI
+            </motion.h1>
+            <motion.p 
+              className="text-xl md:text-2xl text-muted-foreground mb-8"
+              variants={itemVariants}
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+              Your Personalized Placement Assistant
+            </motion.p>
+            <motion.p 
+              className="text-lg text-muted-foreground mb-12 max-w-2xl mx-auto"
+              variants={itemVariants}
+            >
+              Automatically convert placement emails into structured opportunities, create smart calendar reminders, 
+              assist with application forms, and get AI-powered preparation guidance.
+            </motion.p>
+            <motion.div 
+              className="flex gap-4 justify-center"
+              variants={itemVariants}
+            >
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link href="/api/auth/signin">
+                  <Button size="lg" className="gap-2">
+                    Get Started
+                    <ArrowRight className="h-5 w-5" />
+                  </Button>
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link href="#features">
+                  <Button size="lg" variant="outline">
+                    Learn More
+                  </Button>
+                </Link>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        </motion.section>
+
+        <motion.section 
+          id="features"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={containerVariants}
+          className="container mx-auto px-4 py-20"
+        >
+          <motion.h2 
+            className="text-3xl font-bold text-center mb-12"
+            variants={itemVariants}
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+            Key Features
+          </motion.h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+            <motion.div 
+              variants={featureVariants}
+              whileHover={{ y: -8, transition: { duration: 0.2 } }}
+              className="bg-card p-6 rounded-xl shadow-lg border hover:shadow-xl transition-shadow"
+            >
+              <motion.div
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6 }}
+              >
+                <Briefcase className="h-12 w-12 text-primary mb-4" />
+              </motion.div>
+              <h3 className="text-xl font-semibold mb-2">Email Detection</h3>
+              <p className="text-muted-foreground">
+                Automatically detect placement emails from your inbox using AI-powered classification
+              </p>
+            </motion.div>
+            <motion.div 
+              variants={featureVariants}
+              whileHover={{ y: -8, transition: { duration: 0.2 } }}
+              className="bg-card p-6 rounded-xl shadow-lg border hover:shadow-xl transition-shadow"
+            >
+              <motion.div
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6 }}
+              >
+                <Calendar className="h-12 w-12 text-primary mb-4" />
+              </motion.div>
+              <h3 className="text-xl font-semibold mb-2">Smart Reminders</h3>
+              <p className="text-muted-foreground">
+                Never miss a deadline with automatic Google Calendar events and reminders
+              </p>
+            </motion.div>
+            <motion.div 
+              variants={featureVariants}
+              whileHover={{ y: -8, transition: { duration: 0.2 } }}
+              className="bg-card p-6 rounded-xl shadow-lg border hover:shadow-xl transition-shadow"
+            >
+              <motion.div
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6 }}
+              >
+                <Zap className="h-12 w-12 text-primary mb-4" />
+              </motion.div>
+              <h3 className="text-xl font-semibold mb-2">Form Assistant</h3>
+              <p className="text-muted-foreground">
+                Auto-fill application forms with your profile information to save time
+              </p>
+            </motion.div>
+            <motion.div 
+              variants={featureVariants}
+              whileHover={{ y: -8, transition: { duration: 0.2 } }}
+              className="bg-card p-6 rounded-xl shadow-lg border hover:shadow-xl transition-shadow"
+            >
+              <motion.div
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6 }}
+              >
+                <Brain className="h-12 w-12 text-primary mb-4" />
+              </motion.div>
+              <h3 className="text-xl font-semibold mb-2">AI Preparation</h3>
+              <p className="text-muted-foreground">
+                Get personalized interview questions and preparation guidance for each role
+              </p>
+            </motion.div>
+          </div>
+        </motion.section>
+
+        <motion.section 
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7 }}
+          className="bg-primary text-primary-foreground py-20"
+        >
+          <div className="container mx-auto px-4 text-center">
+            <h2 className="text-3xl font-bold mb-6">Ready to Transform Your Placement Journey?</h2>
+            <p className="text-xl mb-8 max-w-2xl mx-auto">
+              Join thousands of students who never miss an opportunity with PlaceMate AI
+            </p>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link href="/api/auth/signin">
+                <Button size="lg" variant="secondary" className="gap-2">
+                  Start Free Today
+                  <ArrowRight className="h-5 w-5" />
+                </Button>
+              </Link>
+            </motion.div>
+          </div>
+        </motion.section>
       </main>
     </div>
-  );
+  )
 }
