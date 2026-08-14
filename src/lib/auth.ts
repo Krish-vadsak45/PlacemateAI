@@ -2,21 +2,29 @@ import NextAuth, { DefaultSession } from "next-auth"
 import Google from "next-auth/providers/google"
 import connectDB from "./mongodb"
 import User from "@/models/User"
+import { checkProfileCompletion } from "./profile-check"
 
 declare module "next-auth" {
   interface Session {
     user: {
       id: string
       profile: any
+      isProfileComplete: boolean
     } & DefaultSession["user"]
   }
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+      authorization: {
+        params: {
+          scope: "openid email profile https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.modify",
+        },
+      },
     }),
   ],
   callbacks: {
@@ -55,6 +63,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return true
         } catch (error) {
           console.error("Error in signIn callback:", error)
+          console.error("Error details:", JSON.stringify(error, null, 2))
           return false
         }
       }
@@ -68,6 +77,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           if (dbUser) {
             session.user.id = dbUser._id.toString()
             session.user.profile = dbUser.profile
+            
+            // Check if profile is complete
+            const profileCheck = await checkProfileCompletion(dbUser._id.toString())
+            session.user.isProfileComplete = profileCheck.isComplete
           }
         } catch (error) {
           console.error("Error in session callback:", error)

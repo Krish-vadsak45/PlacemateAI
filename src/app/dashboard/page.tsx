@@ -1,8 +1,10 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import PlacementCard from "@/components/PlacementCard"
+import PlacementList from "@/components/PlacementList"
 import { Button } from "@/components/ui/button"
 import { Plus, Filter } from "lucide-react"
+import GmailMonitorToggle from "@/components/GmailMonitorToggle"
 
 export default async function Dashboard() {
   const session = await auth()
@@ -15,8 +17,8 @@ export default async function Dashboard() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-2">Track your placement opportunities</p>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground mt-2">Track your placement opportunities</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="gap-2">
@@ -31,27 +33,29 @@ export default async function Dashboard() {
       </div>
 
       <div className="grid gap-6">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-blue-900 mb-2">Welcome, {session.user.name}!</h2>
-          <p className="text-blue-700">
+        <GmailMonitorToggle />
+
+        <div className="bg-primary/10 border border-primary/20 rounded-lg p-6">
+          <h2 className="text-lg font-semibold text-primary mb-2">Welcome, {session.user.name}!</h2>
+          <p className="text-primary/80">
             Get started by connecting your Gmail account to automatically detect placement emails.
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-white border rounded-lg p-6">
+          <div className="bg-card border rounded-lg p-6">
             <h3 className="text-lg font-semibold mb-4">Upcoming Deadlines</h3>
-            <p className="text-gray-500 text-sm">No upcoming deadlines</p>
+            <p className="text-muted-foreground text-sm">No upcoming deadlines</p>
           </div>
           
-          <div className="bg-white border rounded-lg p-6">
+          <div className="bg-card border rounded-lg p-6">
             <h3 className="text-lg font-semibold mb-4">Applications</h3>
-            <p className="text-gray-500 text-sm">No applications yet</p>
+            <p className="text-muted-foreground text-sm">No applications yet</p>
           </div>
           
-          <div className="bg-white border rounded-lg p-6">
+          <div className="bg-card border rounded-lg p-6">
             <h3 className="text-lg font-semibold mb-4">Statistics</h3>
-            <div className="space-y-2 text-sm text-gray-600">
+            <div className="space-y-2 text-sm text-muted-foreground">
               <div className="flex justify-between">
                 <span>Total Opportunities:</span>
                 <span className="font-medium">0</span>
@@ -70,12 +74,7 @@ export default async function Dashboard() {
 
         <div>
           <h2 className="text-2xl font-bold mb-4">Recent Opportunities</h2>
-          <div className="text-center py-12 bg-white border rounded-lg">
-            <p className="text-gray-500">No placement opportunities yet.</p>
-            <p className="text-sm text-gray-400 mt-2">
-              Connect your Gmail account or add opportunities manually.
-            </p>
-          </div>
+          <PlacementList />
         </div>
       </div>
     </div>

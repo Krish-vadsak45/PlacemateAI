@@ -5,8 +5,13 @@ import { Button } from "@/components/ui/button"
 import { Briefcase, User, LogOut, LayoutDashboard } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { motion } from "framer-motion"
+import { signOut } from "next-auth/react"
 
 export default function Navbar() {
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: "/" })
+  }
+
   return (
     <motion.nav
       initial={{ y: -100, opacity: 0 }}
@@ -66,12 +71,15 @@ export default function Navbar() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <form action="/api/auth/signout" method="POST">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <LogOut className="h-4 w-4" />
-                  Sign Out
-                </Button>
-              </form>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-2"
+                onClick={handleSignOut}
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
             </motion.div>
             <motion.div
               whileHover={{ scale: 1.05 }}
