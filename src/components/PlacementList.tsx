@@ -19,6 +19,7 @@ interface Placement {
   extractionConfidence: number
   applicationLink?: string
   createdAt: string
+  matchScore?: number
 }
 
 export default function PlacementList() {
@@ -90,17 +91,23 @@ export default function PlacementList() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "NEW": return "bg-blue-500"
-      case "INTERESTED": return "bg-purple-500"
-      case "APPLIED": return "bg-green-500"
-      case "ASSESSMENT_SCHEDULED": return "bg-yellow-500"
-      case "INTERVIEW_SCHEDULED": return "bg-orange-500"
-      case "SELECTED": return "bg-emerald-500"
-      case "REJECTED": return "bg-red-500"
-      case "NOT_INTERESTED": return "bg-gray-500"
-      case "EXPIRED": return "bg-slate-500"
+      case "NEW": return "bg-red-500"
+      case "INTERESTED": return "bg-red-400"
+      case "APPLIED": return "bg-red-300"
+      case "ASSESSMENT_SCHEDULED": return "bg-red-200"
+      case "INTERVIEW_SCHEDULED": return "bg-red-600"
+      case "SELECTED": return "bg-red-700"
+      case "REJECTED": return "bg-gray-500"
+      case "NOT_INTERESTED": return "bg-gray-400"
+      case "EXPIRED": return "bg-gray-300"
       default: return "bg-gray-500"
     }
+  }
+
+  const getMatchScoreColor = (score: number) => {
+    if (score >= 80) return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-500"
+    if (score >= 60) return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-500"
+    return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-500"
   }
 
   if (isLoading) {
@@ -137,9 +144,16 @@ export default function PlacementList() {
                 <CardTitle className="text-lg">{placement.companyName}</CardTitle>
                 <CardDescription className="mt-1">{placement.jobRole}</CardDescription>
               </div>
-              <Badge className={getStatusColor(placement.status)}>
-                {placement.status.replace(/_/g, " ")}
-              </Badge>
+              <div className="flex flex-col gap-2 items-end">
+                {placement.matchScore !== undefined && (
+                  <Badge className={`border-2 ${getMatchScoreColor(placement.matchScore)}`}>
+                    {placement.matchScore}% Match
+                  </Badge>
+                )}
+                <Badge className={getStatusColor(placement.status)}>
+                  {placement.status.replace(/_/g, " ")}
+                </Badge>
+              </div>
             </div>
           </CardHeader>
           <CardContent>

@@ -15,9 +15,12 @@ export interface IPlacement extends Document {
   interviewDate?: Date;
   applicationLink?: string;
   googleFormLink?: string;
+  placementCellFormLink?: string; // New: Placement cell specific form
+  companyFormLink?: string; // New: Company specific form
   emailId?: string;
   status: 'NEW' | 'INTERESTED' | 'APPLIED' | 'ASSESSMENT_SCHEDULED' | 'INTERVIEW_SCHEDULED' | 'REJECTED' | 'SELECTED' | 'NOT_INTERESTED' | 'EXPIRED';
   extractedByAI: boolean;
+  extractionProvider?: string;
   extractionConfidence: number;
   // Email detection fields
   emailFrom?: string;
@@ -43,9 +46,35 @@ export interface IPlacement extends Document {
     note?: string;
   }>;
   calendarEventId?: string;
+  deadlineCalendarEventId?: string;
+  assessmentCalendarEventId?: string;
+  interviewCalendarEventId?: string;
   reminderSettings?: {
     deadlineReminder: boolean;
     interviewReminder: boolean;
+  };
+  aiSummary?: string; // AI-generated summary
+  processingStatus?: 'RECEIVED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  processingAttempts?: number;
+  lastProcessedAt?: Date;
+  processingError?: string;
+  // Job matching fields
+  jobRequirements?: {
+    requiredSkills: string[];
+    preferredSkills: string[];
+    responsibilities: string[];
+    experienceLevel?: string;
+    educationRequirements?: string;
+    locationPreference?: string;
+  };
+  matchScore?: number; // 0-100
+  matchBreakdown?: {
+    skillsMatch: number; // 0-100
+    cgpaMatch: number; // 0-100
+    branchMatch: number; // 0-100
+    experienceMatch: number; // 0-100
+    locationMatch: number; // 0-100
+    overallScore: number; // 0-100
   };
   createdAt: Date;
   updatedAt: Date;
@@ -80,6 +109,8 @@ const PlacementSchema = new Schema<IPlacement>(
     interviewDate: Date,
     applicationLink: String,
     googleFormLink: String,
+    placementCellFormLink: { type: String, default: null }, // New: Placement cell specific form
+    companyFormLink: { type: String, default: null }, // New: Company specific form
     emailId: String,
     status: {
       type: String,
@@ -90,6 +121,7 @@ const PlacementSchema = new Schema<IPlacement>(
       type: Boolean,
       default: false,
     },
+    extractionProvider: String,
     extractionConfidence: {
       type: Number,
       default: 0,
@@ -120,13 +152,44 @@ const PlacementSchema = new Schema<IPlacement>(
       note: String
     }],
     calendarEventId: String,
+    deadlineCalendarEventId: String,
+    assessmentCalendarEventId: String,
+    interviewCalendarEventId: String,
     reminderSettings: {
       deadlineReminder: { type: Boolean, default: true },
       interviewReminder: { type: Boolean, default: true }
+    },
+    aiSummary: { type: String, default: null }, // AI-generated summary
+    processingStatus: {
+      type: String,
+      enum: ['RECEIVED', 'PROCESSING', 'COMPLETED', 'FAILED'],
+      default: 'RECEIVED'
+    },
+    processingAttempts: { type: Number, default: 0 },
+    lastProcessedAt: { type: Date },
+    processingError: { type: String },
+    // Job matching fields
+    jobRequirements: {
+      requiredSkills: { type: [String], default: [] },
+      preferredSkills: { type: [String], default: [] },
+      responsibilities: { type: [String], default: [] },
+      experienceLevel: String,
+      educationRequirements: String,
+      locationPreference: String
+    },
+    matchScore: { type: Number, min: 0, max: 100 },
+    matchBreakdown: {
+      skillsMatch: { type: Number, min: 0, max: 100 },
+      cgpaMatch: { type: Number, min: 0, max: 100 },
+      branchMatch: { type: Number, min: 0, max: 100 },
+      experienceMatch: { type: Number, min: 0, max: 100 },
+      locationMatch: { type: Number, min: 0, max: 100 },
+      overallScore: { type: Number, min: 0, max: 100 }
     }
   },
   {
     timestamps: true,
+    strict: false // Allow fields that aren't in the schema
   }
 );
 

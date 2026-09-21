@@ -1,5 +1,9 @@
+import mongoose from "mongoose"
 import { createGmailService, GmailMessage } from "./gmail-service"
 import { createEmailDetectionService, EmailData } from "./email-detection"
+import { createAIExtractionService, ExtractionResult } from "./ai-extraction"
+import { createAISummaryService } from "./ai-summary"
+import { createJobMatcher } from "./job-matcher"
 import connectDB from "./mongodb"
 import User from "@/models/User"
 import Placement from "@/models/Placement"
@@ -114,86 +118,139 @@ export class EmailProcessor {
   }
 
   /**
-   * Extract company name and job role from email subject
-   */
-  private extractFromSubject(subject: string): { companyName: string; jobRole: string } {
-    // Common patterns for placement cell emails
-    const patterns = [
-      // Pattern: (BTech/MTech/MCA - Role) Company Name
-      /\([^)]+\)\s*(.+)$/,
-      // Pattern: Company Name - Role
-      /^(.+)\s*-\s*(.+)$/,
-      // Pattern: Role at Company Name
-      /^(.+)\s+at\s+(.+)$/i,
-    ]
-
-    for (const pattern of patterns) {
-      const match = subject.match(pattern)
-      if (match) {
-        // Try to identify which part is company name vs job role
-        const parts = match.slice(1)
-        const companyPart = parts.find(p => 
-          p.includes('Pvt') || p.includes('Ltd') || p.includes('Inc') || 
-          p.includes('Technologies') || p.includes('Solutions') || 
-          p.includes('Company') || p.includes('Corp')
-        )
-        
-        if (companyPart) {
-          const jobRolePart = parts.find(p => p !== companyPart)
-          return {
-            companyName: companyPart.trim(),
-            jobRole: jobRolePart?.trim() || 'Internship'
-          }
-        }
-      }
-    }
-
-    // Fallback: if subject contains parentheses, extract content after parentheses
-    const parenMatch = subject.match(/\([^)]+\)\s*(.+)$/)
-    if (parenMatch) {
-      return {
-        companyName: parenMatch[1].trim(),
-        jobRole: 'Internship'
-      }
-    }
-
-    return { companyName: "Unknown", jobRole: "To be determined" }
-  }
-
-  /**
-   * Save placement email to database
+   * Save placement email to database using upsert to handle duplicates
    */
   private async savePlacementEmail(email: GmailMessage, confidence: number, reason: string): Promise<void> {
     try {
-      // Check if placement already exists
-      const existingPlacement = await Placement.findOne({ emailId: email.id })
-      
-      if (existingPlacement) {
-        console.log(`Placement email already exists: ${email.id}`)
-        return
-      }
-
-      // Extract basic info from subject
-      const { companyName, jobRole } = this.extractFromSubject(email.subject)
-
-      // Create new placement entry
-      await Placement.create({
-        userId: this.userId,
-        emailId: email.id,
-        companyName,
-        jobRole,
-        extractedByAI: false,
-        extractionConfidence: confidence,
-        emailFrom: email.from,
-        emailSubject: email.subject,
-        emailBody: email.body,
-        emailDate: email.date,
-        detectionReason: reason,
-        status: "NEW",
+      // Extract details using AI with fallback chain
+      const aiExtractionService = createAIExtractionService()
+      const extractionResult: ExtractionResult = await aiExtractionService.extractDetails({
+        subject: email.subject,
+        body: email.body,
+        from: email.from
       })
 
-      console.log(`Saved placement email: ${email.subject} (confidence: ${confidence})`)
+      console.log(`AI Extraction Result:`, {
+        provider: extractionResult.provider,
+        confidence: extractionResult.confidence,
+        companyName: extractionResult.companyName,
+        jobRole: extractionResult.jobRole
+      })
+
+      // Auto-generate AI summary for the placement
+      let aiSummary: string | undefined = undefined
+      try {
+        const aiSummaryService = createAISummaryService()
+        const summaryResult = await aiSummaryService.generateSummary({
+          subject: email.subject,
+          body: email.body,
+          from: email.from
+        })
+        aiSummary = summaryResult.summary
+        console.log(`AI Summary generated successfully, length: ${aiSummary?.length || 0} characters`)
+      } catch (summaryError) {
+        console.error("Failed to auto-generate AI summary:", summaryError)
+        // Don't fail the entire process if summary generation fails
+      }
+
+      // Build update document - only update AI-extracted fields and email content
+      // Preserve user-modified fields: status, notes, attachments, applicationHistory, calendarEventId
+      const updateDoc: any = {
+        $set: {
+          companyName: extractionResult.companyName,
+          jobRole: extractionResult.jobRole,
+          package: extractionResult.package,
+          location: extractionResult.location,
+          applicationDeadline: extractionResult.applicationDeadline,
+          assessmentDate: extractionResult.assessmentDate,
+          interviewDate: extractionResult.interviewDate,
+          applicationLink: extractionResult.applicationLink,
+          googleFormLink: extractionResult.googleFormLink,
+          placementCellFormLink: extractionResult.placementCellFormLink,
+          companyFormLink: extractionResult.companyFormLink,
+          extractedByAI: extractionResult.provider !== "regex",
+          extractionProvider: extractionResult.provider,
+          extractionConfidence: extractionResult.confidence,
+          emailFrom: email.from,
+          emailSubject: email.subject,
+          emailBody: email.body,
+          emailDate: email.date,
+          detectionReason: reason,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: {
+          userId: this.userId,
+          emailId: email.id,
+          status: "NEW",
+          notes: [],
+          attachments: [],
+          applicationHistory: [],
+          calendarEventId: null,
+          reminderSettings: {
+            deadlineReminder: true,
+            interviewReminder: true
+          },
+        }
+      }
+
+      // Only update AI summary if it was generated successfully
+      if (aiSummary) {
+        updateDoc.$set.aiSummary = aiSummary
+      }
+
+      // Add job requirements if extracted
+      if (extractionResult.jobRequirements) {
+        updateDoc.$set.jobRequirements = extractionResult.jobRequirements
+      }
+
+      // Perform upsert operation
+      const placement = await Placement.findOneAndUpdate(
+        { emailId: email.id },
+        updateDoc,
+        {
+          upsert: true,
+          new: true,
+          runValidators: true
+        }
+      )
+
+      const isNew = !placement.createdAt || placement.createdAt.getTime() === placement.updatedAt.getTime()
+
+      console.log(`${isNew ? 'Created new' : 'Updated existing'} placement email: ${email.subject} (provider: ${extractionResult.provider}, confidence: ${extractionResult.confidence})`)
+      console.log(`Placement ${isNew ? 'created' : 'updated'} with aiSummary: ${!!(placement as any).aiSummary}`)
+      if ((placement as any).aiSummary) {
+        console.log(`Summary length in DB: ${(placement as any).aiSummary.length} characters`)
+      }
+
+      // Calculate and save match score
+      try {
+        const jobMatcher = createJobMatcher()
+        const matchResult = await jobMatcher.calculateMatchScore(
+          new mongoose.Types.ObjectId(this.userId),
+          placement
+        )
+
+        await Placement.findByIdAndUpdate(
+          placement._id,
+          {
+            $set: {
+              matchScore: matchResult.score,
+              matchBreakdown: matchResult.breakdown
+            }
+          }
+        )
+
+        console.log(`Match score calculated: ${matchResult.score}/100`)
+      } catch (matchError) {
+        console.error("Failed to calculate match score:", matchError)
+        // Don't fail the entire process if matching fails
+      }
     } catch (error) {
+      // Handle duplicate key error (MongoDB error code 11000)
+      if (error instanceof Error && 'code' in error && (error as any).code === 11000) {
+        console.log(`Duplicate email detected: ${email.id}, skipping...`)
+        return
+      }
       console.error("Error saving placement email:", error)
       throw error
     }

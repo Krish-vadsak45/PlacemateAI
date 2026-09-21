@@ -28,10 +28,14 @@ export class AISummaryService {
     body: string
     from: string
   }): Promise<AISummaryResult> {
+    console.log('Starting AI summary generation for:', emailContent.subject)
+    
     // Try Gemini first
     if (this.geminiClient) {
       try {
+        console.log('Attempting Gemini summary generation...')
         const summary = await this.generateGeminiSummary(emailContent)
+        console.log('Gemini summary generated successfully, length:', summary.length)
         return { summary, provider: 'gemini' }
       } catch (error) {
         console.error('Gemini failed, falling back to Groq:', error)
@@ -41,13 +45,16 @@ export class AISummaryService {
     // Fallback to Groq
     if (this.groqClient) {
       try {
+        console.log('Attempting Groq summary generation...')
         const summary = await this.generateGroqSummary(emailContent)
+        console.log('Groq summary generated successfully, length:', summary.length)
         return { summary, provider: 'groq' }
       } catch (error) {
         console.error('Groq failed:', error)
       }
     }
 
+    console.error('No AI service available for summary generation')
     return {
       summary: 'Unable to generate AI summary. Please check your API keys.',
       provider: 'gemini',
@@ -88,7 +95,12 @@ export class AISummaryService {
 **Notes:**
 • [Special instructions]
 
-Keep it extremely concise. Use only bullet points. Maximum 2-3 bullet points per section. No paragraphs.
+IMPORTANT FORMATTING RULES:
+- Use bold ONLY for section headers (like **Company & Role:**, **Requirements:**, etc.)
+- NEVER use bold formatting within bullet points
+- Keep bullet points clean and simple without markdown formatting
+- Maximum 2-3 bullet points per section
+- No paragraphs, only bullet points
 
 Email:
 From: ${emailContent.from}
@@ -130,7 +142,12 @@ Body: ${emailContent.body}`
 **Notes:**
 • [Special instructions]
 
-Keep it extremely concise. Use only bullet points. Maximum 2-3 bullet points per section. No paragraphs.
+IMPORTANT FORMATTING RULES:
+- Use bold ONLY for section headers (like **Company & Role:**, **Requirements:**, etc.)
+- NEVER use bold formatting within bullet points
+- Keep bullet points clean and simple without markdown formatting
+- Maximum 2-3 bullet points per section
+- No paragraphs, only bullet points
 
 Email:
 From: ${emailContent.from}

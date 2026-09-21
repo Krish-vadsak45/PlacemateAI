@@ -13,6 +13,7 @@ interface PlacementCardProps {
   applicationDeadline?: Date
   status: string
   applicationLink?: string
+  matchScore?: number
 }
 
 export default function PlacementCard({
@@ -23,6 +24,7 @@ export default function PlacementCard({
   applicationDeadline,
   status,
   applicationLink,
+  matchScore,
 }: PlacementCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -41,6 +43,12 @@ export default function PlacementCard({
     }
   }
 
+  const getMatchScoreColor = (score: number) => {
+    if (score >= 80) return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-500"
+    if (score >= 60) return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-500"
+    return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-500"
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -50,22 +58,35 @@ export default function PlacementCard({
     >
       <Card className="hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/50">
         <CardHeader>
-          <motion.div 
+          <motion.div
             className="flex justify-between items-start"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.1 }}
           >
-            <CardTitle className="text-xl">{companyName}</CardTitle>
-            <motion.span 
-              className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}
-              whileHover={{ scale: 1.1 }}
-              transition={{ duration: 0.2 }}
-            >
-              {status.replace(/_/g, " ")}
-            </motion.span>
+            <div className="flex-1">
+              <CardTitle className="text-xl">{companyName}</CardTitle>
+              <p className="text-muted-foreground">{jobRole}</p>
+            </div>
+            <div className="flex flex-col gap-2 items-end">
+              {matchScore !== undefined && (
+                <motion.span
+                  className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${getMatchScoreColor(matchScore)}`}
+                  whileHover={{ scale: 1.1 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {matchScore}% Match
+                </motion.span>
+              )}
+              <motion.span
+                className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}
+                whileHover={{ scale: 1.1 }}
+                transition={{ duration: 0.2 }}
+              >
+                {status.replace(/_/g, " ")}
+              </motion.span>
+            </div>
           </motion.div>
-          <p className="text-muted-foreground">{jobRole}</p>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">

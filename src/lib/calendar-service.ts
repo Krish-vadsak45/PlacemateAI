@@ -37,8 +37,14 @@ export class CalendarService {
       })
 
       return response.data.id || ''
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating calendar event:', error)
+      
+      // Check for insufficient scopes error
+      if (error?.code === 403 || error?.status === 'PERMISSION_DENIED') {
+        throw new Error('INSUFFICIENT_SCOPES')
+      }
+      
       throw new Error('Failed to create calendar event')
     }
   }
@@ -55,8 +61,14 @@ export class CalendarService {
         eventId: eventId,
         requestBody: event,
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating calendar event:', error)
+      
+      // Check for insufficient scopes error
+      if (error?.code === 403 || error?.status === 'PERMISSION_DENIED') {
+        throw new Error('INSUFFICIENT_SCOPES')
+      }
+      
       throw new Error('Failed to update calendar event')
     }
   }
@@ -72,8 +84,14 @@ export class CalendarService {
         calendarId: 'primary',
         eventId: eventId,
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting calendar event:', error)
+      
+      // Check for insufficient scopes error
+      if (error?.code === 403 || error?.status === 'PERMISSION_DENIED') {
+        throw new Error('INSUFFICIENT_SCOPES')
+      }
+      
       throw new Error('Failed to delete calendar event')
     }
   }

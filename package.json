@@ -6,24 +6,29 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "worker": "tsx scripts/start-worker.ts",
+    "worker:dev": "tsx watch scripts/start-worker.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
     "@google-cloud/pubsub": "^6.0.1",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^5.8.0",
+    "bullmq": "^6.3.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^13.1.0",
     "google-auth-library": "^11.0.2",
     "googleapis": "^174.0.1",
     "groq-sdk": "^1.5.0",
+    "ioredis": "^6.0.0",
     "lucide-react": "^1.31.0",
     "mongoose": "^9.9.2",
-    "next": "16.3.0",
+    "next": "^16.3.5",
     "next-auth": "^5.0.0-beta.32",
     "next-themes": "^0.4.6",
+    "puppeteer": "^25.7.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hook-form": "^7.85.0",
@@ -42,6 +47,10 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
+  },
+  "allowScripts": {
+    "puppeteer@25.7.0": true
   }
 }

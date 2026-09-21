@@ -31,9 +31,9 @@ export default function Navbar() {
                 whileHover={{ rotate: 360 }}
                 transition={{ duration: 0.6 }}
               >
-                <Briefcase className="h-6 w-6 text-primary group-hover:text-primary/80 transition-colors" />
+                <Briefcase className="h-6 w-6 text-red-600 dark:text-red-400 group-hover:text-red-700 dark:group-hover:text-red-300 transition-colors" />
               </motion.div>
-              <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              <span className="text-xl font-bold text-red-600 dark:text-red-400">
                 PlaceMate AI
               </span>
             </Link>

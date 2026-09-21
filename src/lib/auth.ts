@@ -22,8 +22,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
       authorization: {
         params: {
-          scope: "openid email profile https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.modify",
+          scope: "openid email profile https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events",
+          access_type: "offline",
+          prompt: "consent",
+          include_granted_scopes: "true",
         },
+      },
+      token: {
+        url: "https://oauth2.googleapis.com/token",
       },
     }),
   ],
@@ -32,9 +38,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (account?.provider === "google") {
         try {
           await connectDB()
-          
+
           const existingUser = await User.findOne({ email: user.email })
-          
+
           if (!existingUser) {
             await User.create({
               name: user.name || "",
@@ -48,6 +54,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 refreshToken: account.refresh_token || undefined,
               },
             })
+            console.log("Created new user with Google tokens")
           } else {
             existingUser.name = user.name || existingUser.name
             existingUser.image = user.image || existingUser.image
@@ -59,7 +66,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             }
             await existingUser.save()
           }
-          
+
           return true
         } catch (error) {
           console.error("Error in signIn callback:", error)

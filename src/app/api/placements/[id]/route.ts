@@ -28,6 +28,8 @@ export async function PATCH(
       assessmentDate,
       interviewDate,
       googleFormLink,
+      placementCellFormLink,
+      companyFormLink,
       attachments,
       applicationHistory,
       calendarEventId
@@ -55,6 +57,8 @@ export async function PATCH(
         ...(assessmentDate !== undefined && { assessmentDate }),
         ...(interviewDate !== undefined && { interviewDate }),
         ...(googleFormLink !== undefined && { googleFormLink }),
+        ...(placementCellFormLink !== undefined && { placementCellFormLink }),
+        ...(companyFormLink !== undefined && { companyFormLink }),
         ...(attachments !== undefined && { attachments }),
         ...(applicationHistory !== undefined && { applicationHistory }),
         ...(calendarEventId !== undefined && { calendarEventId }),

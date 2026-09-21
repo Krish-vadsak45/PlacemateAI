@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import crypto from "crypto"
 import connectDB from "@/lib/mongodb"
 import User from "@/models/User"
-import { createEmailProcessor } from "@/lib/email-processor"
+import { emailQueue, EmailProcessingJob } from "@/lib/queue"
 import { OAuth2Client } from "google-auth-library"
 
 export async function POST(request: Request) {
@@ -137,23 +137,40 @@ export async function POST(request: Request) {
           console.log(`Processing ${historyData.history.length} history records`)
           for (const historyRecord of historyData.history) {
             console.log("History record keys:", Object.keys(historyRecord))
-            if (historyRecord.messagesAdded) {
-              console.log(`Found ${historyRecord.messagesAdded.length} messages added`)
-              for (const messageAdded of historyRecord.messagesAdded) {
-                const emailId = messageAdded.message.id
+            
+            // Handle both messagesAdded and messages fields
+            const messages = historyRecord.messagesAdded || historyRecord.messages
+            if (messages && messages.length > 0) {
+              console.log(`Found ${messages.length} messages`)
+              for (const message of messages) {
+                const emailId = message.id || message.message?.id
+                if (!emailId) {
+                  console.log("No email ID in message")
+                  continue
+                }
                 console.log(`Processing new email: ${emailId}`)
 
                 try {
-                  const processor = createEmailProcessor(user._id.toString())
-                  const result = await processor.processEmail(emailId)
-                  console.log(`Email processed for user ${user.email}:`, result)
+                  // Add email processing job to queue instead of processing directly
+                  const jobData: EmailProcessingJob = {
+                    userId: user._id.toString(),
+                    emailId: emailId,
+                    historyId: historyId,
+                  }
+                  
+                  const job = await emailQueue.add('process-email', jobData, {
+                    jobId: `${user._id.toString()}-${emailId}`, // Unique job ID for idempotency
+                    removeOnComplete: false,
+                    removeOnFail: false,
+                  })
+                  
+                  console.log(`Email processing job added to queue: ${job.id} for email ${emailId}`)
                 } catch (error) {
-                  console.error(`Error processing email ${emailId}:`, error)
-                  // Continue processing other emails even if one fails
+                  console.error(`Error adding email ${emailId} to queue:`, error)
                 }
               }
             } else {
-              console.log("No messagesAdded in this history record")
+              console.log("No messages in this history record")
             }
           }
         } else {

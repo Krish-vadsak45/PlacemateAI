@@ -10,6 +10,7 @@ export interface IUser extends Document {
     collegeEmail: string;
     branch?: string;
     semester?: number;
+    year?: string; // Added for form pre-fill
     cgpa?: number;
     graduationYear?: number;
     linkedin?: string;
@@ -17,6 +18,8 @@ export interface IUser extends Document {
     portfolio?: string;
     skills: string[];
     resume?: string;
+    resumeUrl?: string; // Added for form pre-fill
+    experience?: string; // Added for form pre-fill
     placementCellEmail: string;
   };
   googleTokens: {
@@ -57,6 +60,7 @@ const UserSchema = new Schema<IUser>(
       },
       branch: String,
       semester: Number,
+      year: String, // Added for form pre-fill
       cgpa: Number,
       graduationYear: Number,
       linkedin: String,
@@ -67,6 +71,8 @@ const UserSchema = new Schema<IUser>(
         default: [],
       },
       resume: String,
+      resumeUrl: String, // Added for form pre-fill
+      experience: String, // Added for form pre-fill
       placementCellEmail: {
         type: String,
         required: true,
