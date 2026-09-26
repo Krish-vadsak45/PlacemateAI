@@ -2,12 +2,16 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Briefcase, User, LogOut, LayoutDashboard } from "lucide-react"
+import { Briefcase, User, LogOut, LayoutDashboard, LogIn } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { motion } from "framer-motion"
-import { signOut } from "next-auth/react"
+import { signOut, useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 
 export default function Navbar() {
+  const { data: session } = useSession()
+  const router = useRouter()
+
   const handleSignOut = async () => {
     await signOut({ callbackUrl: "/" })
   }
@@ -45,42 +49,69 @@ export default function Navbar() {
             transition={{ delay: 0.3, duration: 0.5 }}
             className="flex items-center space-x-4"
           >
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Link href="/dashboard">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <LayoutDashboard className="h-4 w-4" />
-                  Dashboard
-                </Button>
-              </Link>
-            </motion.div>
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Link href="/profile">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <User className="h-4 w-4" />
-                  Profile
-                </Button>
-              </Link>
-            </motion.div>
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="gap-2"
-                onClick={handleSignOut}
+            {session && (
+              <>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => router.push("/dashboard")}
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    Dashboard
+                  </Button>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => router.push("/profile")}
+                  >
+                    <User className="h-4 w-4" />
+                    Profile
+                  </Button>
+                </motion.div>
+              </>
+            )}
+            {session ? (
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <LogOut className="h-4 w-4" />
-                Sign Out
-              </Button>
-            </motion.div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
+              </motion.div>
+            ) : (
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => router.push("/auth/signin")}
+                >
+                  <LogIn className="h-4 w-4" />
+                  Login
+                </Button>
+              </motion.div>
+            )}
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

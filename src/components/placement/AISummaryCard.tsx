@@ -60,11 +60,11 @@ export function AISummaryCard({ aiSummary, isLoadingSummary, onGenerateSummary }
             whileHover={{ scale: 1.01, y: -2 }}
             className="group"
           >
-            <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 rounded-xl p-4 border border-gray-200 dark:border-gray-700 hover:border-red-500/30 dark:hover:border-red-500/30 transition-all duration-300 hover:shadow-lg">
+            <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 rounded-xl p-4 border border-gray-200 dark:border-gray-700 hover:border-purple-500/30 dark:hover:border-purple-500/30 transition-all duration-300 hover:shadow-lg">
               <div className="flex items-center gap-2 mb-3">
                 <motion.div
                   whileHover={{ rotate: 15, scale: 1.1 }}
-                  className={`p-2 rounded-lg bg-white dark:bg-gray-800 shadow-sm ${sectionColor}`}
+                  className={`p-2 rounded-lg bg-white dark:bg-gray-800 shadow-sm`}
                 >
                   {sectionIcon}
                 </motion.div>
@@ -87,7 +87,7 @@ export function AISummaryCard({ aiSummary, isLoadingSummary, onGenerateSummary }
                       className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300"
                     >
                       <motion.div
-                        className="w-1.5 h-1.5 rounded-full bg-red-500 mt-2 flex-shrink-0"
+                        className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 flex-shrink-0"
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ delay: 0.5 + (index * 0.1) + (lineIndex * 0.05) }}
@@ -126,7 +126,7 @@ export function AISummaryCard({ aiSummary, isLoadingSummary, onGenerateSummary }
       whileHover={{ rotateY: 8, rotateX: 5, scale: 1.02, boxShadow: "0 25px 50px -12px rgba(99, 102, 241, 0.25)" }}
       className="mb-6"
     >
-      <Card className="bg-white dark:bg-gray-800 backdrop-blur-xl border border-gray-200 dark:border-gray-700 shadow-2xl shadow-red-500/20 overflow-hidden">
+      <Card className="bg-white dark:bg-gray-800 backdrop-blur-xl border border-gray-200 dark:border-gray-700 shadow-2xl shadow-purple-500/10 overflow-hidden">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <motion.div 
@@ -145,9 +145,9 @@ export function AISummaryCard({ aiSummary, isLoadingSummary, onGenerateSummary }
                   ease: aiSummary ? "easeOut" : "linear" 
                 }}
               >
-                <Sparkles className="h-5 w-5 text-red-600 dark:text-red-400" />
+                <Sparkles className="h-5 w-5 text-purple-600 dark:text-purple-400" />
               </motion.div>
-              <CardTitle className="text-red-600 dark:text-red-400 text-lg">
+              <CardTitle className="text-purple-600 dark:text-purple-400 text-lg">
                 AI Summary
               </CardTitle>
             </motion.div>
@@ -163,7 +163,7 @@ export function AISummaryCard({ aiSummary, isLoadingSummary, onGenerateSummary }
                     variant="ghost"
                     size="sm"
                     onClick={handleCopySummary}
-                    className="text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                    className="text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400"
                   >
                     {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                   </Button>
@@ -181,7 +181,7 @@ export function AISummaryCard({ aiSummary, isLoadingSummary, onGenerateSummary }
                     size="sm"
                     onClick={onGenerateSummary}
                     disabled={isLoadingSummary}
-                    className="border-red-500/50 hover:bg-red-500/10 hover:shadow-lg hover:shadow-red-500/30 transition-all duration-300"
+                    className="border-purple-500/50 hover:bg-purple-500/10 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300"
                   >
                     {isLoadingSummary ? (
                       <>
@@ -227,8 +227,8 @@ export function AISummaryCard({ aiSummary, isLoadingSummary, onGenerateSummary }
                   transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                   className="relative mb-4"
                 >
-                  <div className="absolute inset-0 bg-red-500/20 rounded-full blur-xl" />
-                  <div className="relative rounded-full h-12 w-12 border-4 border-red-500 border-t-transparent" />
+                  <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-xl" />
+                  <div className="relative rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent" />
                 </motion.div>
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Generating AI Summary
@@ -268,7 +268,7 @@ export function AISummaryCard({ aiSummary, isLoadingSummary, onGenerateSummary }
                 <Button
                   variant="outline"
                   onClick={onGenerateSummary}
-                  className="border-red-500/50 hover:bg-red-500/10 hover:shadow-lg hover:shadow-red-500/30 transition-all"
+                  className="border-purple-500/50 hover:bg-purple-500/10 hover:shadow-lg hover:shadow-purple-500/30 transition-all"
                 >
                   <Sparkles className="h-4 w-4 mr-2" />
                   Generate Summary

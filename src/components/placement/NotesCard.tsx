@@ -43,7 +43,7 @@ export function NotesCard({ placement, newNote, onNoteChange, onAddNote, onDelet
       whileHover={{ rotateY: 8, rotateX: 5, scale: 1.02, boxShadow: "0 25px 50px -12px rgba(99, 102, 241, 0.25)" }}
       className="mb-6"
     >
-      <Card className="bg-white dark:bg-gray-800 backdrop-blur-xl border border-gray-200 dark:border-gray-700 shadow-2xl shadow-red-500/20 overflow-hidden">
+      <Card className="bg-white dark:bg-gray-800 backdrop-blur-xl border border-gray-200 dark:border-gray-700 shadow-2xl shadow-teal-500/10 overflow-hidden">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <motion.div 
@@ -55,10 +55,10 @@ export function NotesCard({ placement, newNote, onNoteChange, onAddNote, onDelet
                 animate={{ rotate: isExpanded ? 45 : 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <FileText className="h-5 w-5 text-red-600 dark:text-red-400" />
+                <FileText className="h-5 w-5 text-teal-600 dark:text-teal-400" />
               </motion.div>
               <div>
-                <CardTitle className="text-red-600 dark:text-red-400 text-lg">
+                <CardTitle className="text-teal-600 dark:text-teal-400 text-lg">
                   Notes
                 </CardTitle>
                 {notesCount > 0 && (
@@ -78,7 +78,7 @@ export function NotesCard({ placement, newNote, onNoteChange, onAddNote, onDelet
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                className="text-gray-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400"
               >
                 {isExpanded ? 'Collapse' : 'Expand'}
               </Button>
@@ -99,7 +99,7 @@ export function NotesCard({ placement, newNote, onNoteChange, onAddNote, onDelet
                   placeholder="Add a note about this placement..."
                   value={newNote}
                   onChange={(e) => onNoteChange(e.target.value)}
-                  className="border-red-500/30 focus:border-red-500 focus:ring-red-500/20 min-h-[100px] bg-white/50 dark:bg-gray-700/50 resize-none transition-all"
+                  className="border-teal-500/30 focus:border-teal-500 focus:ring-teal-500/20 min-h-[100px] bg-white/50 dark:bg-gray-700/50 resize-none transition-all"
                   rows={3}
                 />
                 <motion.div
@@ -111,7 +111,7 @@ export function NotesCard({ placement, newNote, onNoteChange, onAddNote, onDelet
                     onClick={onAddNote}
                     disabled={!newNote.trim()}
                     size="sm"
-                    className="bg-red-600 hover:bg-red-700 hover:shadow-lg hover:shadow-red-500/30 transition-all"
+                    className="bg-teal-600 hover:bg-teal-700 hover:shadow-lg hover:shadow-teal-500/30 transition-all"
                   >
                     <Plus className="h-4 w-4 mr-1" />
                     Add
@@ -139,11 +139,11 @@ export function NotesCard({ placement, newNote, onNoteChange, onAddNote, onDelet
                       whileHover={{ x: 5, scale: 1.01 }}
                       className="group relative"
                     >
-                      <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 rounded-xl p-4 border border-gray-200 dark:border-gray-700 hover:border-red-500/30 dark:hover:border-red-500/30 transition-all duration-300 hover:shadow-lg">
+                      <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 rounded-xl p-4 border border-gray-200 dark:border-gray-700 hover:border-teal-500/30 dark:hover:border-teal-500/30 transition-all duration-300 hover:shadow-lg">
                         <div className="flex justify-between items-start gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-2">
-                              <MessageSquare className="h-3 w-3 text-red-600 dark:text-red-400 flex-shrink-0" />
+                              <MessageSquare className="h-3 w-3 text-teal-600 dark:text-teal-400 flex-shrink-0" />
                               <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed break-words">
                                 {note.content}
                               </p>
@@ -162,7 +162,7 @@ export function NotesCard({ placement, newNote, onNoteChange, onAddNote, onDelet
                               variant="ghost"
                               size="sm"
                               onClick={() => onDeleteNote(note.id)}
-                              className="text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                              className="text-gray-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -182,7 +182,7 @@ export function NotesCard({ placement, newNote, onNoteChange, onAddNote, onDelet
                         variant="ghost"
                         size="sm"
                         onClick={() => setIsExpanded(true)}
-                        className="text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                        className="text-gray-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400"
                       >
                         View {placement.notes.length - 2} more {placement.notes.length - 2 === 1 ? 'note' : 'notes'}
                       </Button>

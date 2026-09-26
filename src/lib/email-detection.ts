@@ -43,10 +43,22 @@ export class EmailDetectionService {
   /**
    * Check if an email is a placement notification
    * Primary filter: Sender matches placement cell email
-   * Secondary filter: Keyword matching in subject/body
+   * Secondary filter: Domain match (same domain as placement cell)
+   * Tertiary filter: Keyword matching in subject/body
    */
   isPlacementEmail(email: EmailData): EmailDetectionResult {
     const fromEmail = this.extractEmail(email.from).toLowerCase()
+    
+    // Exclude Google Calendar notifications
+    if (fromEmail.includes('calendar-notification@google.com') || 
+        fromEmail.includes('calendar.google.com') ||
+        email.from.toLowerCase().includes('google calendar')) {
+      return {
+        isPlacementEmail: false,
+        confidence: 0,
+        reason: "Google Calendar notification excluded",
+      }
+    }
     
     // Primary filter: Direct match with placement cell email
     if (fromEmail === this.placementCellEmail) {

@@ -36,9 +36,9 @@ export default auth((req) => {
   }
 
   // Redirect to dashboard if trying to access profile page but profile is already complete
-  if (pathname === "/profile" && session?.user?.isProfileComplete) {
-    return NextResponse.redirect(new URL("/dashboard", req.url))
-  }
+  // if (pathname === "/profile" && session?.user?.isProfileComplete) {
+  //   return NextResponse.redirect(new URL("/dashboard", req.url))
+  // }
 
   return NextResponse.next()
 })
