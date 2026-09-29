@@ -84,10 +84,6 @@ worker.on('error', (err) => {
   console.error('Worker error:', err)
 })
 
-worker.on('waiting', (job) => {
-  console.log(`Job ${job.id} is waiting`)
-})
-
 worker.on('completed', (job) => {
   console.log(`Job ${job.id} completed successfully`)
 })

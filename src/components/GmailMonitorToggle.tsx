@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { Mail, Loader2, CheckCircle, AlertCircle } from "lucide-react"
+import { Mail, Loader2, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
+import Link from "next/link"
 
 export default function GmailMonitorToggle() {
   const { data: session } = useSession()
@@ -40,7 +40,7 @@ export default function GmailMonitorToggle() {
         description: "Please sign in again to grant Gmail permissions",
         action: {
           label: "Sign In",
-          onClick: () => window.location.href = "/auth/signin?callbackUrl=/dashboard",
+          onClick: () => (window.location.href = "/auth/signin?callbackUrl=/dashboard"),
         },
       })
       return
@@ -48,10 +48,10 @@ export default function GmailMonitorToggle() {
 
     if (!hasPlacementCellEmail) {
       toast.error("Placement cell email not set", {
-        description: "Please complete your profile with placement cell email",
+        description: "Please configure your placement cell sender email in profile",
         action: {
           label: "Go to Profile",
-          onClick: () => window.location.href = "/profile",
+          onClick: () => (window.location.href = "/profile"),
         },
       })
       return
@@ -70,7 +70,9 @@ export default function GmailMonitorToggle() {
       if (response.ok) {
         setWatchEnabled(enabled)
         toast.success(data.message, {
-          description: enabled ? "Real-time email monitoring is now active" : "Email monitoring has been disabled",
+          description: enabled
+            ? "Real-time email monitoring is active. Inbound notices will be processed."
+            : "Email monitoring has been paused.",
         })
       } else {
         toast.error("Failed to toggle Gmail watch", {
@@ -89,73 +91,97 @@ export default function GmailMonitorToggle() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin" />
+      <div className="glass-panel rounded-2xl p-4 flex items-center justify-between border border-border animate-pulse">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-xl bg-muted" />
+          <div className="space-y-1.5">
+            <div className="h-3.5 w-32 bg-muted rounded" />
+            <div className="h-2.5 w-48 bg-muted rounded" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+        <div className="h-6 w-11 bg-muted rounded-full" />
+      </div>
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Mail className="h-5 w-5" />
-          Gmail Monitoring
-        </CardTitle>
-        <CardDescription>
-          Automatically detect placement emails from your placement cell
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              {watchEnabled ? (
-                <CheckCircle className="h-4 w-4 text-green-500" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-muted-foreground" />
-              )}
-              <span className="text-sm font-medium">
-                {watchEnabled ? "Monitoring Active" : "Monitoring Disabled"}
-              </span>
-            </div>
-            {!hasAccessToken && (
-              <p className="text-xs text-destructive">Gmail not connected</p>
-            )}
-            {!hasPlacementCellEmail && (
-              <p className="text-xs text-destructive">Placement cell email not set</p>
-            )}
+    <div className="glass-panel rounded-2xl p-4 sm:p-5 border border-border shadow-sm transition-all">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Left side info */}
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="h-9 w-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-foreground border border-border flex items-center justify-center shrink-0">
+            <Mail className="h-4 w-4 text-muted-foreground" />
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-semibold text-foreground">
+                Gmail Ingestion Monitor
+              </span>
+              {watchEnabled ? (
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-zinc-100 dark:bg-zinc-800 text-foreground border border-border">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Active
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border">
+                  Paused
+                </span>
+              )}
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              {watchEnabled
+                ? "Listening for inbound placement notifications and schedules via Pub/Sub."
+                : "Enable to automatically detect and parse placement cell emails as they arrive."}
+            </p>
+
             {!hasAccessToken && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => window.location.href = "/auth/signin?callbackUrl=/dashboard"}
-              >
-                Connect Gmail
-              </Button>
+              <p className="text-xs text-muted-foreground flex items-center gap-1 pt-0.5">
+                <AlertCircle className="h-3 w-3 text-amber-500" />
+                Gmail authorization missing. Sign in again to grant access.
+              </p>
             )}
-            <Switch
-              checked={watchEnabled}
-              onCheckedChange={toggleWatch}
-              disabled={isToggling || !hasAccessToken || !hasPlacementCellEmail}
-            />
+            {hasAccessToken && !hasPlacementCellEmail && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1 pt-0.5">
+                <AlertCircle className="h-3 w-3 text-amber-500" />
+                Placement cell email not set.{" "}
+                <Link href="/profile" className="underline hover:text-foreground">
+                  Configure in profile
+                </Link>
+              </p>
+            )}
           </div>
         </div>
-        {isToggling && (
-          <div className="mt-4 flex items-center justify-center">
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            <span className="ml-2 text-sm text-muted-foreground">
-              {watchEnabled ? "Disabling..." : "Enabling..."}
-            </span>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+
+        {/* Right side controls */}
+        <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-border">
+          {!hasAccessToken ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => (window.location.href = "/auth/signin?callbackUrl=/dashboard")}
+              className="text-xs h-8"
+            >
+              Connect Gmail
+            </Button>
+          ) : (
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground hidden md:inline-block">
+                {watchEnabled ? "Enabled" : "Disabled"}
+              </span>
+              <div className="flex items-center gap-2">
+                {isToggling && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                <Switch
+                  checked={watchEnabled}
+                  onCheckedChange={toggleWatch}
+                  disabled={isToggling || !hasAccessToken || !hasPlacementCellEmail}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }

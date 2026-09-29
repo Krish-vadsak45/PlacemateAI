@@ -3,17 +3,17 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { motion } from "framer-motion"
 import { Placement, PlacementDetailProps } from "@/types/placement"
-import { StatusBadge, getStatusColor } from "./StatusBadge"
+import { StatusBadge } from "./StatusBadge"
 import { AISummaryCard } from "./AISummaryCard"
 import { PlacementDetailsCard } from "./PlacementDetailsCard"
 import { NotesCard } from "./NotesCard"
 import { EmailContentCard } from "./EmailContentCard"
-import { AttachmentsCard } from "./AttachmentsCard"
 import { ApplicationHistoryCard } from "./ApplicationHistoryCard"
 import { PlacementNavigation } from "./PlacementNavigation"
 import { MatchScoreCard } from "./MatchScoreCard"
+import { Button } from "@/components/ui/button"
+import { ExternalLink } from "lucide-react"
 
 export default function PlacementDetail({ placement: initialPlacement }: PlacementDetailProps) {
   const router = useRouter()
@@ -24,10 +24,6 @@ export default function PlacementDetail({ placement: initialPlacement }: Placeme
   const [aiSummary, setAiSummary] = useState<string | null>(initialPlacement.aiSummary || null)
   const [isLoadingSummary, setIsLoadingSummary] = useState(false)
   const [showEmail, setShowEmail] = useState(false)
-
-  // Debug logging
-  console.log('PlacementDetail - Initial aiSummary:', initialPlacement.aiSummary)
-  console.log('PlacementDetail - Current aiSummary state:', aiSummary)
 
   const handleStatusChange = async (newStatus: string) => {
     try {
@@ -40,7 +36,7 @@ export default function PlacementDetail({ placement: initialPlacement }: Placeme
       if (response.ok) {
         setPlacement({ ...placement, status: newStatus })
         setEditedPlacement({ ...editedPlacement, status: newStatus })
-        toast.success("Status updated successfully")
+        toast.success(`Status updated to ${newStatus.replace(/_/g, " ")}`)
       } else {
         toast.error("Failed to update status")
       }
@@ -59,7 +55,6 @@ export default function PlacementDetail({ placement: initialPlacement }: Placeme
 
       if (response.ok) {
         const data = await response.json()
-        console.log("AI Summary Client Response:", data)
         setAiSummary(data.summary)
         toast.success("AI summary generated successfully")
       } else {
@@ -89,11 +84,11 @@ export default function PlacementDetail({ placement: initialPlacement }: Placeme
           interview: 'interviewCalendarEventId'
         }[eventType]
         setPlacement({ ...placement, [updateField]: data.eventId })
-        toast.success("Added to calendar successfully")
+        toast.success("Added to Google Calendar with reminders")
       } else {
         const data = await response.json()
         if (data.requiresReauth) {
-          toast.error("Calendar permissions required. Please sign out and sign in again to grant calendar access.")
+          toast.error("Calendar permissions required. Please sign in again to grant access.")
         } else {
           toast.error(data.error || "Failed to add to calendar")
         }
@@ -159,7 +154,7 @@ export default function PlacementDetail({ placement: initialPlacement }: Placeme
 
   const handleDeleteNote = async (noteId: string) => {
     try {
-      const updatedNotes = placement.notes?.filter((note) => note.id !== noteId) || []
+      const updatedNotes = placement.notes?.filter((n) => n.id !== noteId) || []
 
       const response = await fetch(`/api/placements/${placement._id}`, {
         method: "PATCH",
@@ -179,205 +174,126 @@ export default function PlacementDetail({ placement: initialPlacement }: Placeme
     }
   }
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
-
-    try {
-      const formData = new FormData()
-      Array.from(files).forEach((file) => {
-        formData.append("files", file)
-      })
-
-      const response = await fetch(`/api/placements/${placement._id}/attachments`, {
-        method: "POST",
-        body: formData,
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setPlacement({ ...placement, attachments: data.attachments })
-        toast.success("Files uploaded successfully")
-      } else {
-        toast.error("Failed to upload files")
-      }
-    } catch (error) {
-      console.error("Error uploading files:", error)
-      toast.error("Failed to upload files")
-    }
-  }
-
-  const handleDeleteAttachment = async (attachmentId: string) => {
-    try {
-      const response = await fetch(`/api/placements/${placement._id}/attachments/${attachmentId}`, {
-        method: "DELETE",
-      })
-
-      if (response.ok) {
-        const updatedAttachments = placement.attachments?.filter((a) => a.id !== attachmentId) || []
-        setPlacement({ ...placement, attachments: updatedAttachments })
-        toast.success("Attachment deleted successfully")
-      } else {
-        toast.error("Failed to delete attachment")
-      }
-    } catch (error) {
-      console.error("Error deleting attachment:", error)
-      toast.error("Failed to delete attachment")
-    }
-  }
-
   const handleBack = () => {
     router.push("/dashboard")
   }
 
-  const handleNext = () => {
-    // Implementation would need to fetch next placement
-    toast.info("Navigation to next placement - to be implemented")
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            rotate: [0, 90, 0],
-          }}
-          transition={{
-            duration: 30,
-            repeat: Infinity,
-            ease: "linear"
-          }}
-          className="absolute -top-40 -right-40 w-96 h-96 bg-red-500/5 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{
-            scale: [1, 1.1, 1],
-            rotate: [0, -90, 0],
-          }}
-          transition={{
-            duration: 25,
-            repeat: Infinity,
-            ease: "linear"
-          }}
-          className="absolute top-1/2 -left-40 w-96 h-96 bg-red-600/5 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{
-            scale: [1, 1.15, 1],
-            rotate: [0, 45, 0],
-          }}
-          transition={{
-            duration: 35,
-            repeat: Infinity,
-            ease: "linear"
-          }}
-          className="absolute -bottom-40 right-1/4 w-96 h-96 bg-red-500/5 rounded-full blur-3xl"
-        />
-      </div>
+    <div className="min-h-screen bg-background text-foreground pb-20">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-6 max-w-7xl">
+        <PlacementNavigation onBack={handleBack} />
 
-      <div className="container mx-auto px-4 py-8 md:py-12 max-w-6xl relative z-10">
-        <PlacementNavigation
-          onBack={handleBack}
-          onNext={handleNext}
-          hasPrevious={true}
-          hasNext={false}
-        />
+        {/* HEADER HERO CARD */}
+        <div className="glass-panel rounded-2xl p-6 sm:p-7 border border-border shadow-sm mb-6 relative overflow-hidden">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+            {/* Left: Avatar + Title */}
+            <div className="flex items-start gap-4 flex-1 min-w-0">
+              <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 flex items-center justify-center font-bold text-xl sm:text-2xl shrink-0">
+                {placement.companyName.charAt(0).toUpperCase()}
+              </div>
 
-        {/* Header Card */}
-        <div className="mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: -30, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
-            whileHover={{ scale: 1.01, rotateX: 2 }}
-            style={{ perspective: 1000 }}
-            className="bg-white dark:bg-gray-800 backdrop-blur-xl rounded-3xl shadow-2xl shadow-red-500/20 p-8 border border-gray-200 dark:border-gray-700 relative overflow-hidden"
-          >
-            {/* Header gradient decoration */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 via-red-500 to-red-600" />
-            
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-red-600 to-red-500 dark:from-red-500 dark:to-red-400 bg-clip-text text-transparent mb-2">
+              <div className="space-y-1 min-w-0 flex-1">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h1 className="text-xl sm:text-3xl font-bold text-foreground tracking-tight font-heading truncate">
                     {placement.companyName}
                   </h1>
-                  <p className="text-xl text-gray-600 dark:text-gray-300">{placement.jobRole}</p>
-                </motion.div>
+                  <StatusBadge
+                    status={placement.status}
+                    onStatusChange={handleStatusChange}
+                    editable={true}
+                  />
+                </div>
+
+                <p className="text-sm sm:text-base text-muted-foreground font-medium">
+                  {placement.jobRole}
+                </p>
+
+                {/* Subtitle details */}
+                <div className="flex items-center gap-3 text-xs text-muted-foreground pt-0.5 flex-wrap">
+                  {placement.package && (
+                    <span className="font-medium text-foreground bg-muted/60 px-2.5 py-0.5 rounded-md">
+                      {placement.package}
+                    </span>
+                  )}
+                  {placement.location && (
+                    <span>📍 {placement.location}</span>
+                  )}
+                  {placement.emailDate && (
+                    <span>Received {new Date(placement.emailDate).toLocaleDateString()}</span>
+                  )}
+                </div>
               </div>
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-                className="flex items-center gap-4"
-              >
-                <StatusBadge
-                  status={placement.status}
-                  onStatusChange={handleStatusChange}
-                  editable={true}
-                />
-              </motion.div>
             </div>
-          </motion.div>
+
+            {/* Right: Quick Action Buttons */}
+            <div className="flex items-center gap-2">
+              {placement.applicationLink && (
+                <a
+                  href={placement.applicationLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button size="sm" className="h-9 text-xs font-semibold gap-1.5 bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-200 shadow-sm rounded-xl px-4">
+                    Apply on Portal
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </Button>
+                </a>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Component Cards */}
-        <div className="space-y-6">
-          <MatchScoreCard
-            matchScore={placement.matchScore}
-            matchBreakdown={placement.matchBreakdown}
-            missingRequiredSkills={placement.matchBreakdown ? undefined : []}
-          />
+        {/* TWO-COLUMN LAYOUT */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* LEFT MAIN COLUMN (7 cols) */}
+          <div className="lg:col-span-7 space-y-6">
+            <PlacementDetailsCard
+              placement={placement}
+              isEditing={isEditing}
+              editedPlacement={editedPlacement}
+              onEditToggle={() => setIsEditing(!isEditing)}
+              onSave={handleSave}
+              onCancel={() => {
+                setIsEditing(false)
+                setEditedPlacement(placement)
+              }}
+              onFieldChange={(field, value) =>
+                setEditedPlacement({ ...editedPlacement, [field]: value })
+              }
+              onAddToCalendar={handleAddToCalendar}
+            />
 
-          <AISummaryCard
-            aiSummary={aiSummary}
-            isLoadingSummary={isLoadingSummary}
-            onGenerateSummary={generateAISummary}
-          />
+            <AISummaryCard
+              aiSummary={aiSummary}
+              isLoadingSummary={isLoadingSummary}
+              onGenerateSummary={generateAISummary}
+            />
 
-          <PlacementDetailsCard
-            placement={placement}
-            isEditing={isEditing}
-            editedPlacement={editedPlacement}
-            onEditToggle={() => setIsEditing(!isEditing)}
-            onSave={handleSave}
-            onCancel={() => {
-              setIsEditing(false)
-              setEditedPlacement(placement)
-            }}
-            onFieldChange={(field, value) =>
-              setEditedPlacement({ ...editedPlacement, [field]: value })
-            }
-            onAddToCalendar={handleAddToCalendar}
-          />
+            <NotesCard
+              placement={placement}
+              newNote={newNote}
+              onNoteChange={setNewNote}
+              onAddNote={handleAddNote}
+              onDeleteNote={handleDeleteNote}
+            />
 
-          <NotesCard
-            placement={placement}
-            newNote={newNote}
-            onNoteChange={setNewNote}
-            onAddNote={handleAddNote}
-            onDeleteNote={handleDeleteNote}
-          />
+            <EmailContentCard
+              placement={placement}
+              showEmail={showEmail}
+              onToggleEmail={() => setShowEmail(!showEmail)}
+            />
 
-          <EmailContentCard
-            placement={placement}
-            showEmail={showEmail}
-            onToggleEmail={() => setShowEmail(!showEmail)}
-          />
+            <ApplicationHistoryCard placement={placement} />
+          </div>
 
-          {/* <AttachmentsCard
-            placement={placement}
-            onFileUpload={handleFileUpload}
-            onDeleteAttachment={handleDeleteAttachment}
-          /> */}
-
-          <ApplicationHistoryCard placement={placement} />
+          {/* RIGHT SIDEBAR (5 cols) */}
+          <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-20">
+            <MatchScoreCard
+              matchScore={placement.matchScore}
+              matchBreakdown={placement.matchBreakdown}
+              missingRequiredSkills={placement.matchBreakdown ? undefined : []}
+            />
+          </div>
         </div>
       </div>
     </div>

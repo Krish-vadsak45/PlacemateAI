@@ -10,8 +10,21 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Save, User as UserIcon, Mail, Phone, GraduationCap, Link, Code, Globe, Loader2, Info } from "lucide-react"
+import { 
+  Save, 
+  User as UserIcon, 
+  Mail, 
+  Phone, 
+  GraduationCap, 
+  Link as LinkIcon, 
+  Code, 
+  Globe, 
+  Loader2, 
+  Info, 
+  Sparkles,
+  Building,
+  FileText
+} from "lucide-react"
 import { profileSchema, type ProfileFormData } from "@/lib/validations/profile"
 
 export default function ProfilePage() {
@@ -24,6 +37,7 @@ export default function ProfilePage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isDirty },
     reset,
   } = useForm<ProfileFormData>({
@@ -46,6 +60,22 @@ export default function ProfilePage() {
       placementCellEmail: "",
     },
   })
+
+  // Watch form fields to compute completion percentage
+  const watchedFields = watch()
+  const requiredFields = [
+    watchedFields.fullName,
+    watchedFields.phone,
+    watchedFields.college,
+    watchedFields.collegeEmail,
+    watchedFields.branch,
+    watchedFields.cgpa,
+    watchedFields.graduationYear,
+    watchedFields.skills,
+    watchedFields.placementCellEmail
+  ]
+  const completedCount = requiredFields.filter(Boolean).length
+  const completionPercent = Math.round((completedCount / requiredFields.length) * 100)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -73,10 +103,9 @@ export default function ProfilePage() {
         placementCellEmail: session.user.profile?.placementCellEmail || "",
       })
 
-      // Show info toast if profile is incomplete (only once)
       if (!session.user.isProfileComplete && !toastShownRef.current) {
         toast.info("Complete your profile", {
-          description: "Please fill in your academic details to access the dashboard",
+          description: "Provide academic & placement cell details for accurate matching",
           icon: <Info className="h-4 w-4" />,
           duration: 5000,
         })
@@ -117,11 +146,10 @@ export default function ProfilePage() {
         throw new Error("Failed to update profile")
       }
 
-      toast.success("Profile saved!", {
-        description: "Your profile has been updated successfully",
+      toast.success("Profile saved successfully!", {
+        description: "Your match scores and Gmail filter have been updated.",
       })
 
-      // Redirect to dashboard after successful profile completion
       setTimeout(() => {
         router.push("/dashboard")
         router.refresh()
@@ -129,7 +157,7 @@ export default function ProfilePage() {
     } catch (error) {
       console.error("Error updating profile:", error)
       toast.error("Failed to update profile", {
-        description: "Please try again later",
+        description: "Please check your network and try again.",
       })
     } finally {
       setIsSaving(false)
@@ -138,215 +166,352 @@ export default function ProfilePage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex items-center justify-center min-h-[70vh]">
+        <div className="text-center space-y-3">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />
+          <p className="text-xs text-muted-foreground">Loading your profile...</p>
+        </div>
       </div>
     )
   }
 
+  const currentSkills = watchedFields.skills 
+    ? watchedFields.skills.split(",").map(s => s.trim()).filter(Boolean)
+    : []
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Profile</h1>
-        <p className="text-muted-foreground mt-2">Manage your personal information and skills</p>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <UserIcon className="h-5 w-5" />
-            Personal Information
-          </CardTitle>
-          <CardDescription>
-            This information will be used to auto-fill application forms
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input id="fullName" placeholder="John Doe" {...register("fullName")} />
-                {errors.fullName && (
-                  <p className="text-sm text-destructive">{errors.fullName.message}</p>
-                )}
+    <div className="min-h-screen bg-background text-foreground pb-20">
+      <div className="container mx-auto px-4 sm:px-6 max-w-4xl pt-8 space-y-8">
+        {/* PROFILE HEADER CARD */}
+        <div className="glass-panel rounded-2xl p-6 sm:p-7 border border-border shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 flex items-center justify-center font-bold text-xl">
+                {session?.user?.name?.charAt(0).toUpperCase() || "U"}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Email
-                </Label>
-                <Input id="email" type="email" {...register("email")} disabled />
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg sm:text-xl font-bold text-foreground font-heading">
+                    {session?.user?.name || "Student Profile"}
+                  </h1>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-foreground border border-border">
+                    Candidate
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">{session?.user?.email}</p>
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  Phone Number
-                </Label>
-                <Input id="phone" type="tel" placeholder="+91 98765 43210" {...register("phone")} />
-                {errors.phone && (
-                  <p className="text-sm text-destructive">{errors.phone.message}</p>
-                )}
+            {/* Profile Strength Indicator */}
+            <div className="sm:text-right space-y-1.5 p-3 rounded-xl bg-muted/30 border border-border/70">
+              <div className="flex items-center sm:justify-end gap-1.5 text-xs font-medium text-foreground">
+                <Sparkles className="h-3 w-3 text-muted-foreground" />
+                Profile Strength: {completionPercent}%
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="college">College Name</Label>
-                <Input id="college" placeholder="Your College" {...register("college")} />
-                {errors.college && (
-                  <p className="text-sm text-destructive">{errors.college.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="collegeEmail" className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  College Email *
-                </Label>
-                <Input id="collegeEmail" type="email" placeholder="student@college.edu" {...register("collegeEmail")} />
-                {errors.collegeEmail && (
-                  <p className="text-sm text-destructive">{errors.collegeEmail.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="placementCellEmail" className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Placement Cell Email *
-                </Label>
-                <Input id="placementCellEmail" type="email" placeholder="placement@college.edu" {...register("placementCellEmail")} />
-                {errors.placementCellEmail && (
-                  <p className="text-sm text-destructive">{errors.placementCellEmail.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="branch">Branch</Label>
-                <Input id="branch" placeholder="Computer Engineering" {...register("branch")} />
-                {errors.branch && (
-                  <p className="text-sm text-destructive">{errors.branch.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="semester">Current Semester</Label>
-                <Input 
-                  id="semester" 
-                  type="number" 
-                  placeholder="6" 
-                  {...register("semester", { valueAsNumber: true })} 
+              <div className="w-32 h-1.5 rounded-full bg-muted overflow-hidden">
+                <div 
+                  className="h-full bg-zinc-900 dark:bg-zinc-100 rounded-full transition-all duration-300"
+                  style={{ width: `${completionPercent}%` }}
                 />
-                {errors.semester && (
-                  <p className="text-sm text-destructive">{errors.semester.message}</p>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                {completionPercent >= 80 ? "Optimized for match scores" : "Complete details for better AI matching"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* MAIN PROFILE FORM */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* SECTION 1: PERSONAL & CONTACT */}
+          <div className="glass-panel rounded-2xl p-6 border border-border space-y-4">
+            <div className="flex items-center gap-2 pb-2.5 border-b border-border">
+              <UserIcon className="h-4 w-4 text-muted-foreground" />
+              <h2 className="text-sm font-bold text-foreground">Personal Information</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="fullName" className="text-xs font-semibold">Full Legal Name *</Label>
+                <Input 
+                  id="fullName" 
+                  placeholder="e.g. John Doe" 
+                  className="rounded-xl h-9 text-xs" 
+                  {...register("fullName")} 
+                />
+                {errors.fullName && (
+                  <p className="text-xs text-destructive">{errors.fullName.message}</p>
                 )}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="cgpa">CGPA</Label>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="phone" className="text-xs font-semibold flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                  Phone Number *
+                </Label>
+                <Input 
+                  id="phone" 
+                  type="tel" 
+                  placeholder="+91 98765 43210" 
+                  className="rounded-xl h-9 text-xs" 
+                  {...register("phone")} 
+                />
+                {errors.phone && (
+                  <p className="text-xs text-destructive">{errors.phone.message}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 2: ACADEMIC CREDENTIALS */}
+          <div className="glass-panel rounded-2xl p-6 border border-border space-y-4">
+            <div className="flex items-center gap-2 pb-2.5 border-b border-border">
+              <GraduationCap className="h-4 w-4 text-muted-foreground" />
+              <h2 className="text-sm font-bold text-foreground">Academic Credentials</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="college" className="text-xs font-semibold flex items-center gap-1.5">
+                  <Building className="h-3.5 w-3.5 text-muted-foreground" />
+                  College / University Name *
+                </Label>
+                <Input 
+                  id="college" 
+                  placeholder="e.g. Indian Institute of Technology" 
+                  className="rounded-xl h-9 text-xs" 
+                  {...register("college")} 
+                />
+                {errors.college && (
+                  <p className="text-xs text-destructive">{errors.college.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="collegeEmail" className="text-xs font-semibold flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                  Official Student / College Email *
+                </Label>
+                <Input 
+                  id="collegeEmail" 
+                  type="email" 
+                  placeholder="student@college.edu" 
+                  className="rounded-xl h-9 text-xs" 
+                  {...register("collegeEmail")} 
+                />
+                {errors.collegeEmail && (
+                  <p className="text-xs text-destructive">{errors.collegeEmail.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="sm:col-span-2 space-y-1.5">
+                <Label htmlFor="branch" className="text-xs font-semibold">Branch / Department *</Label>
+                <Input 
+                  id="branch" 
+                  placeholder="e.g. Computer Science Engineering" 
+                  className="rounded-xl h-9 text-xs" 
+                  {...register("branch")} 
+                />
+                {errors.branch && (
+                  <p className="text-xs text-destructive">{errors.branch.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="cgpa" className="text-xs font-semibold">CGPA (out of 10) *</Label>
                 <Input 
                   id="cgpa" 
                   type="number" 
                   step="0.01" 
-                  placeholder="8.5" 
+                  placeholder="8.50" 
+                  className="rounded-xl h-9 text-xs" 
                   {...register("cgpa", { valueAsNumber: true })} 
                 />
                 {errors.cgpa && (
-                  <p className="text-sm text-destructive">{errors.cgpa.message}</p>
+                  <p className="text-xs text-destructive">{errors.cgpa.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="graduationYear" className="text-xs font-semibold">Grad Year *</Label>
+                <Input 
+                  id="graduationYear" 
+                  type="number" 
+                  placeholder="2026" 
+                  className="rounded-xl h-9 text-xs" 
+                  {...register("graduationYear", { valueAsNumber: true })} 
+                />
+                {errors.graduationYear && (
+                  <p className="text-xs text-destructive">{errors.graduationYear.message}</p>
                 )}
               </div>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="graduationYear">Graduation Year</Label>
-              <Input 
-                id="graduationYear" 
-                type="number" 
-                placeholder="2027" 
-                {...register("graduationYear", { valueAsNumber: true })} 
-              />
-              {errors.graduationYear && (
-                <p className="text-sm text-destructive">{errors.graduationYear.message}</p>
-              )}
+          {/* SECTION 3: PLACEMENT CELL GMAIL MONITORING */}
+          <div className="glass-panel rounded-2xl p-6 border border-border space-y-3">
+            <div className="flex items-center justify-between pb-2.5 border-b border-border">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <h2 className="text-sm font-bold text-foreground">Placement Cell Email</h2>
+              </div>
+              <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-full border border-border">
+                Required for Automation
+              </span>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="skills">Technical Skills</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="placementCellEmail" className="text-xs font-semibold">
+                Sender Email Address of Your Placement Cell / TPO *
+              </Label>
+              <Input 
+                id="placementCellEmail" 
+                type="email" 
+                placeholder="e.g. placements@college.edu or tpo@university.ac.in" 
+                className="rounded-xl h-9 text-xs" 
+                {...register("placementCellEmail")} 
+              />
+              <p className="text-[11px] text-muted-foreground">
+                PlaceMate AI uses this address to monitor your inbox and capture new campus drive notices.
+              </p>
+              {errors.placementCellEmail && (
+                <p className="text-xs text-destructive">{errors.placementCellEmail.message}</p>
+              )}
+            </div>
+          </div>
+
+          {/* SECTION 4: TECHNICAL SKILLS & RESUME */}
+          <div className="glass-panel rounded-2xl p-6 border border-border space-y-3.5">
+            <div className="flex items-center gap-2 pb-2.5 border-b border-border">
+              <Code className="h-4 w-4 text-muted-foreground" />
+              <h2 className="text-sm font-bold text-foreground">Technical Skills &amp; Resume</h2>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="skills" className="text-xs font-semibold">Technical Skills (Comma separated) *</Label>
               <Textarea 
                 id="skills" 
-                placeholder="JavaScript, React, Node.js, MongoDB, Python, etc."
-                rows={3}
-                {...register("skills")}
+                placeholder="Python, React, TypeScript, Node.js, SQL, Machine Learning, AWS, Docker" 
+                rows={3} 
+                className="rounded-xl text-xs resize-none" 
+                {...register("skills")} 
               />
-              <p className="text-sm text-muted-foreground">Separate skills with commas</p>
+              <p className="text-[11px] text-muted-foreground">
+                These skills are matched against job requirements to calculate your profile fit score.
+              </p>
               {errors.skills && (
-                <p className="text-sm text-destructive">{errors.skills.message}</p>
+                <p className="text-xs text-destructive">{errors.skills.message}</p>
+              )}
+
+              {/* Skill Preview Chips */}
+              {currentSkills.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {currentSkills.map((skill, idx) => (
+                    <span 
+                      key={idx}
+                      className="text-xs px-2.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-foreground font-medium border border-border"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="resume">Resume Link</Label>
-              <Input id="resume" placeholder="https://drive.google.com/your-resume" {...register("resume")} />
+            <div className="space-y-1.5 pt-1">
+              <Label htmlFor="resume" className="text-xs font-semibold flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                Resume Cloud Link (Google Drive / Dropbox)
+              </Label>
+              <Input 
+                id="resume" 
+                placeholder="https://drive.google.com/file/d/your-resume/view" 
+                className="rounded-xl h-9 text-xs" 
+                {...register("resume")} 
+              />
               {errors.resume && (
-                <p className="text-sm text-destructive">{errors.resume.message}</p>
+                <p className="text-xs text-destructive">{errors.resume.message}</p>
               )}
             </div>
+          </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="linkedin" className="flex items-center gap-2">
-                  <Link className="h-4 w-4" />
-                  LinkedIn
-                </Label>
-                <Input id="linkedin" placeholder="https://linkedin.com/in/your-profile" {...register("linkedin")} />
-                {errors.linkedin && (
-                  <p className="text-sm text-destructive">{errors.linkedin.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="github" className="flex items-center gap-2">
-                  <Code className="h-4 w-4" />
-                  GitHub
-                </Label>
-                <Input id="github" placeholder="https://github.com/your-username" {...register("github")} />
-                {errors.github && (
-                  <p className="text-sm text-destructive">{errors.github.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="portfolio" className="flex items-center gap-2">
-                  <Globe className="h-4 w-4" />
-                  Portfolio
-                </Label>
-                <Input id="portfolio" placeholder="https://your-portfolio.com" {...register("portfolio")} />
-                {errors.portfolio && (
-                  <p className="text-sm text-destructive">{errors.portfolio.message}</p>
-                )}
-              </div>
+          {/* SECTION 5: ONLINE PROFILES */}
+          <div className="glass-panel rounded-2xl p-6 border border-border space-y-3.5">
+            <div className="flex items-center gap-2 pb-2.5 border-b border-border">
+              <Globe className="h-4 w-4 text-muted-foreground" />
+              <h2 className="text-sm font-bold text-foreground">Online Profiles &amp; Links</h2>
             </div>
 
-            <div className="flex justify-end gap-4 pt-6 border-t border-border">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => reset()}
-                disabled={!isDirty}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" className="gap-2" disabled={isSaving || !isDirty}>
-                {isSaving ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-                {isSaving ? "Saving..." : "Save Changes"}
-              </Button>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="linkedin" className="text-xs font-semibold flex items-center gap-1.5">
+                  <LinkIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                  LinkedIn URL
+                </Label>
+                <Input 
+                  id="linkedin" 
+                  placeholder="https://linkedin.com/in/username" 
+                  className="rounded-xl h-9 text-xs" 
+                  {...register("linkedin")} 
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="github" className="text-xs font-semibold flex items-center gap-1.5">
+                  <Code className="h-3.5 w-3.5 text-muted-foreground" />
+                  GitHub URL
+                </Label>
+                <Input 
+                  id="github" 
+                  placeholder="https://github.com/username" 
+                  className="rounded-xl h-9 text-xs" 
+                  {...register("github")} 
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="portfolio" className="text-xs font-semibold flex items-center gap-1.5">
+                  <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                  Portfolio Website
+                </Label>
+                <Input 
+                  id="portfolio" 
+                  placeholder="https://myportfolio.dev" 
+                  className="rounded-xl h-9 text-xs" 
+                  {...register("portfolio")} 
+                />
+              </div>
             </div>
-          </form>
-        </CardContent>
-      </Card>
+          </div>
+
+          {/* ACTION BUTTONS */}
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => reset()}
+              disabled={!isDirty || isSaving}
+              className="h-9 text-xs rounded-xl"
+            >
+              Discard Changes
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSaving || !isDirty}
+              className="h-9 text-xs font-semibold gap-2 bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-200 rounded-xl px-5 shadow-sm"
+            >
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {isSaving ? "Saving..." : "Save Profile Details"}
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

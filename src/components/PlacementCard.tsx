@@ -1,9 +1,7 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, MapPin, DollarSign, ExternalLink, Clock } from "lucide-react"
-import { motion } from "framer-motion"
+import { MapPin, DollarSign, ExternalLink, Clock, Sparkles } from "lucide-react"
 
 interface PlacementCardProps {
   companyName: string
@@ -14,6 +12,7 @@ interface PlacementCardProps {
   status: string
   applicationLink?: string
   matchScore?: number
+  onViewDetails?: () => void
 }
 
 export default function PlacementCard({
@@ -25,139 +24,87 @@ export default function PlacementCard({
   status,
   applicationLink,
   matchScore,
+  onViewDetails,
 }: PlacementCardProps) {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "NEW":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-      case "APPLIED":
-        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-      case "INTERVIEW_SCHEDULED":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-      case "REJECTED":
-        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+  const getStatusColor = (s: string) => {
+    switch (s) {
       case "SELECTED":
-        return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300"
+        return "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/50"
+      case "INTERVIEW_SCHEDULED":
+      case "ASSESSMENT_SCHEDULED":
+        return "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/50"
+      case "APPLIED":
+      case "INTERESTED":
+      case "NEW":
+        return "bg-zinc-100 dark:bg-zinc-800 text-foreground border-border"
+      case "REJECTED":
+        return "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/50"
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+        return "bg-muted text-muted-foreground border-border"
     }
   }
 
-  const getMatchScoreColor = (score: number) => {
-    if (score >= 80) return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-500"
-    if (score >= 60) return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-500"
-    return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-500"
-  }
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+    <div 
+      onClick={onViewDetails}
+      className="glass-panel rounded-2xl p-5 border border-border glow-card transition-all cursor-pointer group"
     >
-      <Card className="hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/50">
-        <CardHeader>
-          <motion.div
-            className="flex justify-between items-start"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.1 }}
-          >
-            <div className="flex-1">
-              <CardTitle className="text-xl">{companyName}</CardTitle>
-              <p className="text-muted-foreground">{jobRole}</p>
-            </div>
-            <div className="flex flex-col gap-2 items-end">
-              {matchScore !== undefined && (
-                <motion.span
-                  className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${getMatchScoreColor(matchScore)}`}
-                  whileHover={{ scale: 1.1 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {matchScore}% Match
-                </motion.span>
-              )}
-              <motion.span
-                className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}
-                whileHover={{ scale: 1.1 }}
-                transition={{ duration: 0.2 }}
-              >
-                {status.replace(/_/g, " ")}
-              </motion.span>
-            </div>
-          </motion.div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {salary && (
-              <motion.div 
-                className="flex items-center gap-2 text-sm text-muted-foreground"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <DollarSign className="h-4 w-4 text-primary" />
-                <span>{salary}</span>
-              </motion.div>
-            )}
-            {location && (
-              <motion.div 
-                className="flex items-center gap-2 text-sm text-muted-foreground"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.25 }}
-              >
-                <MapPin className="h-4 w-4 text-primary" />
-                <span>{location}</span>
-              </motion.div>
-            )}
-            {applicationDeadline && (
-              <motion.div 
-                className="flex items-center gap-2 text-sm text-muted-foreground"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <Calendar className="h-4 w-4 text-primary" />
-                <span>Deadline: {new Date(applicationDeadline).toLocaleDateString()}</span>
-              </motion.div>
-            )}
-            <motion.div 
-              className="flex gap-2 pt-4"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 }}
-            >
-              {applicationLink && (
-                <motion.a 
-                  href={applicationLink} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex-1"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Button size="sm" variant="outline" className="w-full gap-2">
-                    <ExternalLink className="h-4 w-4" />
-                    Apply
-                  </Button>
-                </motion.a>
-              )}
-              <motion.div 
-                className="flex-1"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Button size="sm" variant="ghost" className="w-full">
-                  <Clock className="h-4 w-4 mr-2" />
-                  Details
-                </Button>
-              </motion.div>
-            </motion.div>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-3.5 flex-1 min-w-0">
+          <div className="h-10 w-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-foreground border border-border flex items-center justify-center font-bold text-sm shrink-0">
+            {companyName.charAt(0).toUpperCase()}
           </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+
+          <div className="space-y-1 min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-sm font-bold text-foreground transition-colors truncate">
+                {companyName}
+              </h3>
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getStatusColor(status)}`}>
+                {status.replace(/_/g, " ")}
+              </span>
+              {matchScore !== undefined && (
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border border-border bg-zinc-100 dark:bg-zinc-800 text-foreground flex items-center gap-1">
+                  <Sparkles className="h-2.5 w-2.5 text-muted-foreground" />
+                  {matchScore}% Match
+                </span>
+              )}
+            </div>
+
+            <p className="text-xs text-muted-foreground truncate">{jobRole}</p>
+
+            <div className="flex items-center gap-2.5 pt-1.5 flex-wrap text-xs text-muted-foreground">
+              {salary && (
+                <span className="font-medium text-foreground bg-muted/60 px-2 py-0.5 rounded-md">
+                  {salary}
+                </span>
+              )}
+              {location && (
+                <span className="inline-flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {location}
+                </span>
+              )}
+              {applicationDeadline && (
+                <span className="inline-flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Deadline: {new Date(applicationDeadline).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {applicationLink && (
+          <div onClick={(e) => e.stopPropagation()}>
+            <a href={applicationLink} target="_blank" rel="noopener noreferrer">
+              <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5 rounded-xl border-border">
+                Apply <ExternalLink className="h-3 w-3" />
+              </Button>
+            </a>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

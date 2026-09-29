@@ -3,19 +3,34 @@
 import { useEffect, useState, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Mail, Calendar, Building, ExternalLink, Trash2, Loader2, Filter, ChevronLeft, ChevronRight } from "lucide-react"
+import { 
+  Building2, 
+  ExternalLink, 
+  Trash2, 
+  Filter, 
+  ChevronLeft, 
+  ChevronRight, 
+  Sparkles, 
+  DollarSign, 
+  MapPin, 
+  Clock,
+  ArrowRight,
+  Briefcase
+} from "lucide-react"
 import { toast } from "sonner"
 import SearchInput from "@/components/search/SearchInput"
 import FilterModal from "@/components/search/FilterModal"
 import QuickFilters from "@/components/search/QuickFilters"
+import Link from "next/link"
 
 interface Placement {
   _id: string
   companyName: string
   jobRole: string
+  package?: string
+  location?: string
+  applicationDeadline?: string
   status: string
   emailSubject?: string
   emailFrom?: string
@@ -146,7 +161,8 @@ export default function PlacementList() {
     }
   }
 
-  const updateStatus = async (id: string, newStatus: string) => {
+  const updateStatus = async (id: string, newStatus: string, e?: React.MouseEvent) => {
+    e?.stopPropagation()
     try {
       const response = await fetch(`/api/placements/${id}`, {
         method: "PATCH",
@@ -156,7 +172,7 @@ export default function PlacementList() {
 
       if (response.ok) {
         setPlacements(placements.map(p => p._id === id ? { ...p, status: newStatus } : p))
-        toast.success("Status updated successfully")
+        toast.success(`Status updated to ${newStatus.replace(/_/g, " ")}`)
       } else {
         toast.error("Failed to update status")
       }
@@ -166,7 +182,10 @@ export default function PlacementList() {
     }
   }
 
-  const deletePlacement = async (id: string) => {
+  const deletePlacement = async (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    if (!confirm("Are you sure you want to delete this placement record?")) return
+
     try {
       const response = await fetch(`/api/placements/${id}`, {
         method: "DELETE",
@@ -174,6 +193,7 @@ export default function PlacementList() {
 
       if (response.ok) {
         setPlacements(placements.filter(p => p._id !== id))
+        setTotal(t => Math.max(0, t - 1))
         toast.success("Placement deleted successfully")
       } else {
         toast.error("Failed to delete placement")
@@ -184,203 +204,274 @@ export default function PlacementList() {
     }
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case "NEW": return "bg-red-500"
-      case "INTERESTED": return "bg-red-400"
-      case "APPLIED": return "bg-red-300"
-      case "ASSESSMENT_SCHEDULED": return "bg-red-200"
-      case "INTERVIEW_SCHEDULED": return "bg-red-600"
-      case "SELECTED": return "bg-red-700"
-      case "REJECTED": return "bg-gray-500"
-      case "NOT_INTERESTED": return "bg-gray-400"
-      case "EXPIRED": return "bg-gray-300"
-      default: return "bg-gray-500"
+      case "SELECTED":
+        return "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/50"
+      case "INTERVIEW_SCHEDULED":
+      case "ASSESSMENT_SCHEDULED":
+        return "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/50"
+      case "APPLIED":
+      case "INTERESTED":
+        return "bg-zinc-100 dark:bg-zinc-800 text-foreground border-border"
+      case "NEW":
+        return "bg-zinc-100 dark:bg-zinc-800 text-foreground border-border font-medium"
+      case "REJECTED":
+        return "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/50"
+      default:
+        return "bg-muted text-muted-foreground border-border"
     }
-  }
-
-  const getMatchScoreColor = (score: number) => {
-    if (score >= 80) return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-500"
-    if (score >= 60) return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-500"
-    return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-500"
   }
 
   const totalPages = Math.ceil(total / limit)
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-4">
-      {/* Search and Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-        <div className="flex-1 w-full">
-          <SearchInput
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Search placements..."
-          />
+      {/* SEARCH AND FILTER TOOLBAR */}
+      <div className="glass-panel p-3.5 rounded-2xl border border-border space-y-3">
+        <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
+          <div className="flex-1">
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search companies, roles, skills, or packages..."
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsFilterModalOpen(true)}
+              className="gap-1.5 h-10 text-xs rounded-xl border-border bg-card"
+            >
+              <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+              Advanced Filters
+              {(filters.status?.length || filters.cgpaMin || filters.matchScoreMin) && (
+                <span className="h-1.5 w-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100" />
+              )}
+            </Button>
+          </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => setIsFilterModalOpen(true)}
-          className="gap-2"
-        >
-          <Filter className="h-4 w-4" />
-          Filters
-        </Button>
+
+        {/* Quick Filters */}
+        <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
+          <QuickFilters onFilterSelect={handleQuickFilter} />
+          <span className="text-xs text-muted-foreground ml-auto">
+            {total} {total === 1 ? "opportunity" : "opportunities"}
+          </span>
+        </div>
       </div>
 
-      {/* Quick Filters */}
-      <QuickFilters onFilterSelect={handleQuickFilter} />
-
-      {/* Results Count */}
-      <div className="text-sm text-muted-foreground">
-        {total} placement{total !== 1 ? 's' : ''} found
-      </div>
-
-      {placements.length === 0 ? (
-        <Card>
-          <CardContent className="py-12">
-            <div className="text-center">
-              <Mail className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No placements found</h3>
-              <p className="text-muted-foreground text-sm">
-                Try adjusting your search or filters to find what you're looking for.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          {placements.map((placement) => (
-            <Card key={placement._id} className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => window.location.href = `/placements/${placement._id}`}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">{placement.companyName}</CardTitle>
-                    <CardDescription className="mt-1">{placement.jobRole}</CardDescription>
-                  </div>
-                  <div className="flex flex-col gap-2 items-end">
-                    {placement.matchScore !== undefined && (
-                      <Badge className={`border-2 ${getMatchScoreColor(placement.matchScore)}`}>
-                        {placement.matchScore}% Match
-                      </Badge>
-                    )}
-                    <Badge className={getStatusColor(placement.status)}>
-                      {placement.status.replace(/_/g, " ")}
-                    </Badge>
+      {/* SKELETON LOADING STATE */}
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="glass-panel rounded-2xl p-5 border border-border animate-pulse space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-muted" />
+                  <div className="space-y-1.5">
+                    <div className="h-3.5 w-36 bg-muted rounded" />
+                    <div className="h-3 w-24 bg-muted rounded" />
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {placement.emailSubject && (
-                    <div className="flex items-start gap-2 text-sm">
-                      <Mail className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                      <div className="flex-1">
-                        <p className="font-medium">{placement.emailSubject}</p>
-                        <p className="text-muted-foreground text-xs">{placement.emailFrom}</p>
+                <div className="h-6 w-16 bg-muted rounded-full" />
+              </div>
+              <div className="h-3 w-2/3 bg-muted rounded" />
+            </div>
+          ))}
+        </div>
+      ) : placements.length === 0 ? (
+        /* EMPTY STATE */
+        <div className="glass-panel rounded-2xl p-10 text-center border border-border space-y-3">
+          <div className="h-12 w-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-muted-foreground mx-auto flex items-center justify-center">
+            <Briefcase className="h-5 w-5" />
+          </div>
+          <div className="space-y-1 max-w-sm mx-auto">
+            <h3 className="text-sm font-bold text-foreground">No Placements Found</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {searchQuery || Object.keys(filters).length > 0
+                ? "Try clearing filters or search terms."
+                : "Placement emails received in your Gmail inbox will appear here once processed."}
+            </p>
+          </div>
+          {(searchQuery || Object.keys(filters).length > 0) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSearchQuery("")
+                setFilters({})
+              }}
+              className="text-xs rounded-xl"
+            >
+              Reset Filters
+            </Button>
+          )}
+        </div>
+      ) : (
+        /* PLACEMENT CARDS LIST */
+        <div className="space-y-3">
+          {placements.map((placement) => {
+            const isDeadlineUrgent = placement.applicationDeadline && 
+              (new Date(placement.applicationDeadline).getTime() - Date.now() < 48 * 3600 * 1000) &&
+              (new Date(placement.applicationDeadline).getTime() > Date.now())
+
+            return (
+              <div
+                key={placement._id}
+                onClick={() => router.push(`/placements/${placement._id}`)}
+                className="glass-panel rounded-2xl p-4 sm:p-5 border border-border glow-card transition-all cursor-pointer group"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                  {/* Left: Company & Role */}
+                  <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                    <div className="h-10 w-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-foreground border border-border flex items-center justify-center font-bold text-sm shrink-0">
+                      {placement.companyName.charAt(0).toUpperCase()}
+                    </div>
+
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-sm font-bold text-foreground transition-colors truncate">
+                          {placement.companyName}
+                        </h3>
+
+                        {/* Status Badge */}
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getStatusBadge(placement.status)}`}>
+                          {placement.status.replace(/_/g, " ")}
+                        </span>
+
+                        {/* Match Score Badge */}
+                        {placement.matchScore !== undefined && (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border border-border bg-zinc-100 dark:bg-zinc-800 text-foreground flex items-center gap-1">
+                            <Sparkles className="h-2.5 w-2.5 text-muted-foreground" />
+                            {placement.matchScore}% Match
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-xs text-muted-foreground truncate">
+                        {placement.jobRole}
+                      </p>
+
+                      {/* Chips row: Package, Location, Deadline */}
+                      <div className="flex items-center gap-2.5 pt-1 flex-wrap text-xs text-muted-foreground">
+                        {placement.package && (
+                          <span className="inline-flex items-center gap-1 font-medium text-foreground bg-muted/60 px-2 py-0.5 rounded-md">
+                            <DollarSign className="h-3 w-3" />
+                            {placement.package}
+                          </span>
+                        )}
+
+                        {placement.location && (
+                          <span className="inline-flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {placement.location}
+                          </span>
+                        )}
+
+                        {placement.applicationDeadline && (
+                          <span className={`inline-flex items-center gap-1 ${isDeadlineUrgent ? "text-amber-600 dark:text-amber-400 font-semibold" : ""}`}>
+                            <Clock className="h-3 w-3" />
+                            Deadline: {new Date(placement.applicationDeadline).toLocaleDateString()}
+                            {isDeadlineUrgent && " (Urgent)"}
+                          </span>
+                        )}
                       </div>
                     </div>
-                  )}
-                  
-                  {placement.emailDate && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span>{new Date(placement.emailDate).toLocaleDateString()}</span>
-                    </div>
-                  )}
+                  </div>
 
-                  {placement.applicationLink && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => window.open(placement.applicationLink, "_blank")}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Apply Now
-                    </Button>
-                  )}
+                  {/* Right: Quick Actions */}
+                  <div 
+                    className="flex items-center sm:flex-col sm:items-end justify-between sm:justify-start gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-border shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      {/* Status Selector Dropdown */}
+                      <select
+                        value={placement.status}
+                        onChange={(e) => updateStatus(placement._id, e.target.value)}
+                        className="text-xs bg-muted/70 border border-border rounded-lg px-2 py-1 font-medium text-foreground cursor-pointer hover:bg-muted focus:outline-none"
+                      >
+                        <option value="NEW">New</option>
+                        <option value="INTERESTED">Interested</option>
+                        <option value="APPLIED">Applied</option>
+                        <option value="ASSESSMENT_SCHEDULED">Assessment</option>
+                        <option value="INTERVIEW_SCHEDULED">Interview</option>
+                        <option value="SELECTED">Selected</option>
+                        <option value="REJECTED">Rejected</option>
+                        <option value="NOT_INTERESTED">Not Interested</option>
+                      </select>
 
-                  <div className="flex items-center justify-between pt-2 border-t">
-                    <div className="flex gap-2">
-                      {placement.status === "NEW" && (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateStatus(placement._id, "INTERESTED")}
-                          >
-                            Mark Interested
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateStatus(placement._id, "NOT_INTERESTED")}
-                          >
-                            Not Interested
-                          </Button>
-                        </>
-                      )}
-                      {placement.status === "INTERESTED" && (
-                        <Button
-                          size="sm"
-                          onClick={() => updateStatus(placement._id, "APPLIED")}
+                      {placement.applicationLink && (
+                        <a
+                          href={placement.applicationLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex"
                         >
-                          Mark Applied
-                        </Button>
+                          <Button size="sm" variant="outline" className="h-7 text-xs px-2.5 rounded-lg gap-1 border-border">
+                            Apply <ExternalLink className="h-3 w-3" />
+                          </Button>
+                        </a>
                       )}
+
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => deletePlacement(placement._id, e)}
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
+                        title="Delete record"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => deletePlacement(placement._id)}
+
+                    <Link 
+                      href={`/placements/${placement._id}`}
+                      className="text-xs font-medium text-muted-foreground hover:text-foreground hover:underline flex items-center gap-1"
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      Details <ArrowRight className="h-3 w-3" />
+                    </Link>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                Page {page} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-        </>
+              </div>
+            )
+          })}
+        </div>
       )}
 
-      {/* Filter Modal */}
+      {/* PAGINATION CONTROLS */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-4 border-t border-border">
+          <p className="text-xs text-muted-foreground">
+            Page {page} of {totalPages}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="h-8 text-xs rounded-xl"
+            >
+              <ChevronLeft className="h-3.5 w-3.5 mr-1" />
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="h-8 text-xs rounded-xl"
+            >
+              Next
+              <ChevronRight className="h-3.5 w-3.5 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* ADVANCED FILTER MODAL */}
       <FilterModal
         open={isFilterModalOpen}
         onOpenChange={setIsFilterModalOpen}

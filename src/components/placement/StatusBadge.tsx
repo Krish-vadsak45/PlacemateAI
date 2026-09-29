@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge"
-import { Placement } from "@/types/placement"
+import { ChevronDown } from "lucide-react"
 
 interface StatusBadgeProps {
   status: string
@@ -14,37 +14,52 @@ const statusOptions = [
 
 export const getStatusColor = (status: string) => {
   switch (status) {
-    case "NEW": return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-700"
-    case "INTERESTED": return "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700"
-    case "APPLIED": return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-200 dark:border-purple-700"
-    case "ASSESSMENT_SCHEDULED": return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 dark:border-amber-700"
-    case "INTERVIEW_SCHEDULED": return "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 border border-orange-200 dark:border-orange-700"
-    case "SELECTED": return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border border-green-200 dark:border-green-700"
-    case "REJECTED": return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border border-red-200 dark:border-red-700"
-    case "NOT_INTERESTED": return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600"
-    case "EXPIRED": return "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600"
-    default: return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600"
+    case "NEW": 
+      return "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/25"
+    case "INTERESTED": 
+      return "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/25"
+    case "APPLIED": 
+      return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25"
+    case "ASSESSMENT_SCHEDULED": 
+      return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25"
+    case "INTERVIEW_SCHEDULED": 
+      return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25"
+    case "SELECTED": 
+      return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 font-bold"
+    case "REJECTED": 
+      return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
+    case "NOT_INTERESTED": 
+      return "bg-muted text-muted-foreground border-border"
+    case "EXPIRED": 
+      return "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/25"
+    default: 
+      return "bg-muted text-muted-foreground border-border"
   }
 }
 
 export function StatusBadge({ status, onStatusChange, editable = false }: StatusBadgeProps) {
   if (editable && onStatusChange) {
     return (
-      <select
-        value={status}
-        onChange={(e) => onStatusChange(e.target.value)}
-        className={`px-3 py-1 rounded-full text-sm font-medium border-0 cursor-pointer ${getStatusColor(status)}`}
-      >
-        {statusOptions.map(option => (
-          <option key={option} value={option}>{option}</option>
-        ))}
-      </select>
+      <div className="relative inline-flex items-center">
+        <select
+          value={status}
+          onChange={(e) => onStatusChange(e.target.value)}
+          className={`appearance-none pl-3 pr-7 py-1 rounded-full text-xs font-semibold border cursor-pointer hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/40 ${getStatusColor(status)}`}
+        >
+          {statusOptions.map(option => (
+            <option key={option} value={option} className="bg-popover text-popover-foreground">
+              {option.replace(/_/g, " ")}
+            </option>
+          ))}
+        </select>
+        <ChevronDown className="h-3 w-3 absolute right-2 pointer-events-none opacity-60" />
+      </div>
     )
   }
 
   return (
-    <Badge className={getStatusColor(status)}>
-      {status}
+    <Badge className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${getStatusColor(status)}`}>
+      {status.replace(/_/g, " ")}
     </Badge>
   )
 }
