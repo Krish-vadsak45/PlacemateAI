@@ -1,8 +1,8 @@
-import { createGmailService, GmailMessage } from "./gmail-service"
+import { createGmailService } from "./gmail-service"
 import { createEmailDetectionService, EmailData } from "./email-detection"
 import { emailQueue, EmailProcessingJob } from "./queue"
 import connectDB from "./mongodb"
-import User from "@/models/User"
+import User, { IUser } from "@/models/User"
 import Placement from "@/models/Placement"
 
 interface PollingConfig {
@@ -93,7 +93,7 @@ export class GmailPoller {
   /**
    * Poll emails for a specific user
    */
-  private async pollUser(user: any) {
+  private async pollUser(user: IUser) {
     try {
       const accessToken = user.googleTokens?.accessToken
       const placementCellEmail = user.profile?.placementCellEmail

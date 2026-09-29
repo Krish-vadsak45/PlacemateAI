@@ -1,7 +1,6 @@
 import 'dotenv/config'
 import connectDB from '../src/lib/mongodb'
 import Placement from '../src/models/Placement'
-import User from '../src/models/User'
 import { createJobMatcher } from '../src/lib/job-matcher'
 
 async function backfillMatchScores() {

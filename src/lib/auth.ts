@@ -1,14 +1,14 @@
 import NextAuth, { DefaultSession } from "next-auth"
 import Google from "next-auth/providers/google"
 import connectDB from "./mongodb"
-import User from "@/models/User"
+import User, { IUser } from "@/models/User"
 import { checkProfileCompletion } from "./profile-check"
 
 declare module "next-auth" {
   interface Session {
     user: {
       id: string
-      profile: any
+      profile: IUser['profile']
       isProfileComplete: boolean
     } & DefaultSession["user"]
   }
@@ -76,7 +76,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return true
     },
-    async session({ session, token }) {
+    async session({ session }) {
       if (session.user) {
         try {
           await connectDB()

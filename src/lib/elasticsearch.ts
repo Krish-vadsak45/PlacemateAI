@@ -11,6 +11,7 @@ export function getElasticsearchClient(): Client {
     const username = process.env.ELASTICSEARCH_USERNAME
     const password = process.env.ELASTICSEARCH_PASSWORD
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const clientConfig: any = {
       node: url,
     }
@@ -171,6 +172,7 @@ export async function deletePlacementsIndex(): Promise<void> {
 /**
  * Index a single placement document
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function indexPlacement(documentId: string, document: any): Promise<void> {
   const client = getElasticsearchClient()
   
@@ -189,6 +191,7 @@ export async function indexPlacement(documentId: string, document: any): Promise
 /**
  * Bulk index placements
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function bulkIndexPlacements(placements: Array<{ id: string; doc: any }>): Promise<void> {
   const client = getElasticsearchClient()
 
@@ -209,6 +212,7 @@ export async function bulkIndexPlacements(placements: Array<{ id: string; doc: a
 /**
  * Update a placement document
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function updatePlacement(documentId: string, partialDoc: any): Promise<void> {
   const client = getElasticsearchClient()
 

@@ -10,9 +10,6 @@ export interface ExtractionResult {
   assessmentDate?: string
   interviewDate?: string
   applicationLink?: string
-  googleFormLink?: string
-  placementCellFormLink?: string // New: Placement cell specific form
-  companyFormLink?: string // New: Company specific form
   // Job requirements for matching
   jobRequirements?: {
     requiredSkills: string[]
@@ -181,29 +178,11 @@ class AIExtractionService {
     const urls = fullText.match(urlRegex) || []
 
     // Categorize URLs
-    let googleFormLink: string | undefined
-    let placementCellFormLink: string | undefined
-    let companyFormLink: string | undefined
     let applicationLink: string | undefined
 
     urls.forEach(url => {
-      // Google Forms
-      if (url.includes('docs.google.com/forms')) {
-        googleFormLink = url
-      }
-      // Placement cell indicators
-      else if (url.includes('placement') || url.includes('tpo') || 
-               url.includes('training') || url.includes('college') || 
-               url.includes('campus') || url.includes('scet.ac.in')) {
-        placementCellFormLink = url
-      }
-      // Company career/application pages
-      else if (url.includes('careers') || url.includes('jobs') || 
-               url.includes('apply') || url.includes('recruitment')) {
-        companyFormLink = url
-      }
-      // General application link
-      else if (!googleFormLink && !placementCellFormLink && !companyFormLink) {
+      // Use the first URL as application link
+      if (!applicationLink) {
         applicationLink = url
       }
     })
@@ -211,9 +190,6 @@ class AIExtractionService {
     return {
       companyName,
       jobRole,
-      googleFormLink,
-      placementCellFormLink,
-      companyFormLink,
       applicationLink,
       provider: "regex",
       confidence: 0.5
@@ -233,9 +209,6 @@ class AIExtractionService {
 - assessmentDate: Assessment/interview date if mentioned (optional)
 - interviewDate: Interview date if mentioned (optional)
 - applicationLink: Application URL if mentioned (optional)
-- googleFormLink: Google Form link if mentioned (optional)
-- placementCellFormLink: Placement cell/college registration form link if mentioned (optional) - This is typically a form from the college placement cell for student registration
-- companyFormLink: Company's own application form link if mentioned (optional) - This is typically the company's direct application form
 - jobRequirements: Object containing job requirements for matching (optional):
   - requiredSkills: Array of required technical skills (e.g., ["JavaScript", "React", "Node.js"])
   - preferredSkills: Array of preferred/nice-to-have skills
@@ -243,27 +216,6 @@ class AIExtractionService {
   - experienceLevel: Experience level (e.g., "Entry Level", "Mid Level", "Senior")
   - educationRequirements: Education/degree requirements (e.g., "BTech/MTech in CS")
   - locationPreference: Work location preference (e.g., "On-site", "Remote", "Hybrid")
-
-IMPORTANT: Distinguish between different types of forms:
-
-1. Placement Cell Forms (placementCellFormLink):
-   - Forms from college/university placement cell
-   - Keywords: "placement cell", "student registration", "college registration", "campus recruitment", "training and placement"
-   - URLs containing: "placement", "tpo", "training", "college", "campus"
-   - Purpose: Student registration for campus placement process
-   - Examples: "scet.ac.in/placement", "tpo.college.edu", "placement.vidyalaya"
-
-2. Company Forms (companyFormLink):
-   - Company's own application/career portal
-   - Keywords: "company application", "career portal", "job application", "apply now", "company website"
-   - URLs containing: "company.com", "careers", "jobs", "apply", "recruitment"
-   - Purpose: Direct application to company
-   - Examples: "google.com/careers", "microsoft.com/jobs", "company.com/apply"
-
-3. General Google Forms (googleFormLink):
-   - Generic Google Forms not specific to placement cell or company
-   - URLs containing: "docs.google.com/forms"
-   - Use this only if the form doesn't clearly fit the above categories
 
 For jobRequirements, extract skills and requirements mentioned in the job description. Look for:
 - Technical skills (programming languages, frameworks, tools)
@@ -302,9 +254,6 @@ Return only the JSON object, no additional text.`
         assessmentDate: parsed.assessmentDate,
         interviewDate: parsed.interviewDate,
         applicationLink: parsed.applicationLink,
-        googleFormLink: parsed.googleFormLink,
-        placementCellFormLink: parsed.placementCellFormLink,
-        companyFormLink: parsed.companyFormLink,
         jobRequirements: parsed.jobRequirements ? {
           requiredSkills: parsed.jobRequirements.requiredSkills || [],
           preferredSkills: parsed.jobRequirements.preferredSkills || [],

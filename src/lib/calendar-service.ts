@@ -37,11 +37,12 @@ export class CalendarService {
       })
 
       return response.data.id || ''
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating calendar event:', error)
       
       // Check for insufficient scopes error
-      if (error?.code === 403 || error?.status === 'PERMISSION_DENIED') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((error as any)?.code === 403 || (error as any)?.status === 'PERMISSION_DENIED') {
         throw new Error('INSUFFICIENT_SCOPES')
       }
       
@@ -61,11 +62,12 @@ export class CalendarService {
         eventId: eventId,
         requestBody: event,
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating calendar event:', error)
       
       // Check for insufficient scopes error
-      if (error?.code === 403 || error?.status === 'PERMISSION_DENIED') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((error as any)?.code === 403 || (error as any)?.status === 'PERMISSION_DENIED') {
         throw new Error('INSUFFICIENT_SCOPES')
       }
       
@@ -84,11 +86,12 @@ export class CalendarService {
         calendarId: 'primary',
         eventId: eventId,
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting calendar event:', error)
       
       // Check for insufficient scopes error
-      if (error?.code === 403 || error?.status === 'PERMISSION_DENIED') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((error as any)?.code === 403 || (error as any)?.status === 'PERMISSION_DENIED') {
         throw new Error('INSUFFICIENT_SCOPES')
       }
       

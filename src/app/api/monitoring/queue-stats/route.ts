@@ -3,7 +3,7 @@ import { getQueueStats, getDeadLetterQueueStats } from "@/lib/queue"
 import Placement from "@/models/Placement"
 import connectDB from "@/lib/mongodb"
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     await connectDB()
 
@@ -21,8 +21,8 @@ export async function GET(request: Request) {
       },
     ])
 
-    const statsMap = new Map()
-    processingStats.forEach((stat: any) => {
+    const statsMap = new Map<string, number>()
+    processingStats.forEach((stat: { _id: string; count: number }) => {
       statsMap.set(stat._id || 'UNKNOWN', stat.count)
     })
 
@@ -75,10 +75,25 @@ export async function GET(request: Request) {
   }
 }
 
+interface QueueStats {
+  waiting: number
+  failed: number
+  active: number
+}
+
+interface DlqStats {
+  waiting: number
+}
+
+interface PlacementStats {
+  failed: number
+  processing: number
+}
+
 function generateAlerts(
-  queueStats: any,
-  dlqStats: any,
-  placementStats: any
+  queueStats: QueueStats,
+  dlqStats: DlqStats,
+  placementStats: PlacementStats
 ): string[] {
   const alerts: string[] = []
 

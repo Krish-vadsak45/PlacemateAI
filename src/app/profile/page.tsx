@@ -30,6 +30,7 @@ import { profileSchema, type ProfileFormData } from "@/lib/validations/profile"
 export default function ProfilePage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const toastShownRef = useRef(false)

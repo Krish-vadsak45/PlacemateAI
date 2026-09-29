@@ -155,6 +155,7 @@ export class EmailProcessor {
 
       // Build update document - only update AI-extracted fields and email content
       // Preserve user-modified fields: status, notes, attachments, applicationHistory, calendarEventId
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updateDoc: any = {
         $set: {
           companyName: extractionResult.companyName,
@@ -165,9 +166,6 @@ export class EmailProcessor {
           assessmentDate: extractionResult.assessmentDate,
           interviewDate: extractionResult.interviewDate,
           applicationLink: extractionResult.applicationLink,
-          googleFormLink: extractionResult.googleFormLink,
-          placementCellFormLink: extractionResult.placementCellFormLink,
-          companyFormLink: extractionResult.companyFormLink,
           extractedByAI: extractionResult.provider !== "regex",
           extractionProvider: extractionResult.provider,
           extractionConfidence: extractionResult.confidence,
@@ -217,8 +215,11 @@ export class EmailProcessor {
       const isNew = !placement.createdAt || placement.createdAt.getTime() === placement.updatedAt.getTime()
 
       console.log(`${isNew ? 'Created new' : 'Updated existing'} placement email: ${email.subject} (provider: ${extractionResult.provider}, confidence: ${extractionResult.confidence})`)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       console.log(`Placement ${isNew ? 'created' : 'updated'} with aiSummary: ${!!(placement as any).aiSummary}`)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((placement as any).aiSummary) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         console.log(`Summary length in DB: ${(placement as any).aiSummary.length} characters`)
       }
 
@@ -247,6 +248,7 @@ export class EmailProcessor {
       }
     } catch (error) {
       // Handle duplicate key error (MongoDB error code 11000)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (error instanceof Error && 'code' in error && (error as any).code === 11000) {
         console.log(`Duplicate email detected: ${email.id}, skipping...`)
         return

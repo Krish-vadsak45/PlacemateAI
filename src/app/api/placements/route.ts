@@ -17,6 +17,7 @@ export async function GET(request: Request) {
     const status = searchParams.get("status")
     const limit = parseInt(searchParams.get("limit") || "20")
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: any = { userId: session.user.id }
     if (status) {
       query.status = status

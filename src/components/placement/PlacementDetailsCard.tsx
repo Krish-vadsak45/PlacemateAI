@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { Placement } from "@/types/placement"
 import { useState } from "react"
+import SyncStatusIndicator from "@/components/calendar/SyncStatusIndicator"
 
 interface PlacementDetailsCardProps {
   placement: Placement
@@ -25,6 +26,7 @@ interface PlacementDetailsCardProps {
   onEditToggle: () => void
   onSave: () => void
   onCancel: () => void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onFieldChange: (field: keyof Placement, value: any) => void
   onAddToCalendar: (eventType: 'deadline' | 'assessment' | 'interview') => void
 }
@@ -41,7 +43,54 @@ export function PlacementDetailsCard({
 }: PlacementDetailsCardProps) {
   const [calendarAdded, setCalendarAdded] = useState<string | null>(null)
 
-  const handleCalendarClick = (eventType: 'deadline' | 'assessment' | 'interview') => {
+  const handleCalendarClick = async (eventType: 'deadline' | 'assessment' | 'interview') => {
+    // Check for conflicts before adding to calendar
+    const eventDate = {
+      deadline: placement.applicationDeadline,
+      assessment: placement.assessmentDate,
+      interview: placement.interviewDate
+    }[eventType]
+
+    if (eventDate) {
+      try {
+        const startDate = new Date(eventDate)
+        const endDate = new Date(startDate.getTime() + 60 * 60 * 1000) // 1 hour duration
+
+        const response = await fetch(`/api/placements/${placement._id}/calendar/conflicts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            eventType,
+            start: startDate.toISOString(),
+            end: endDate.toISOString(),
+          }),
+        })
+
+        if (!response.ok) {
+          console.error("Conflict check failed with status:", response.status)
+          // Proceed anyway if conflict check fails
+        } else {
+          const contentType = response.headers.get("content-type")
+          if (contentType && contentType.includes("application/json")) {
+            const data = await response.json()
+            if (data.hasConflicts && data.conflicts.length > 0) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const conflictList = data.conflicts.map((c: any) => 
+                `- ${c.summary} at ${new Date(c.start?.dateTime || c.start?.date).toLocaleString()}`
+              ).join('\n')
+              
+              if (!confirm(`Scheduling conflicts detected:\n\n${conflictList}\n\nDo you want to proceed anyway?`)) {
+                return
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error checking conflicts:", error)
+        // Proceed anyway if conflict check fails
+      }
+    }
+
     onAddToCalendar(eventType)
     setCalendarAdded(eventType)
     setTimeout(() => setCalendarAdded(null), 3000)
@@ -172,16 +221,6 @@ export function PlacementDetailsCard({
                 className="rounded-xl text-xs h-9"
               />
             </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Google Form Registration URL</Label>
-              <Input
-                value={editedPlacement.googleFormLink || ""}
-                onChange={(e) => onFieldChange("googleFormLink", e.target.value)}
-                placeholder="https://forms.gle/..."
-                className="rounded-xl text-xs h-9"
-              />
-            </div>
           </div>
         </div>
       ) : (
@@ -231,24 +270,37 @@ export function PlacementDetailsCard({
                   </p>
                 </div>
                 {placement.applicationDeadline && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleCalendarClick('deadline')}
-                    className="h-7 text-[11px] gap-1 rounded-lg w-full border-border"
-                  >
-                    {isEventAdded('deadline') || calendarAdded === 'deadline' ? (
-                      <>
-                        <CheckCircle2 className="h-3 w-3 text-muted-foreground" />
-                        In Calendar
-                      </>
-                    ) : (
-                      <>
-                        <Calendar className="h-3 w-3 text-muted-foreground" />
-                        Sync Calendar
-                      </>
+                  <div className="space-y-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleCalendarClick('deadline')}
+                      className="h-7 text-[11px] gap-1 rounded-lg w-full border-border"
+                    >
+                      {isEventAdded('deadline') || calendarAdded === 'deadline' ? (
+                        <>
+                          <CheckCircle2 className="h-3 w-3 text-muted-foreground" />
+                          In Calendar
+                        </>
+                      ) : (
+                        <>
+                          <Calendar className="h-3 w-3 text-muted-foreground" />
+                          Sync Calendar
+                        </>
+                      )}
+                    </Button>
+                    {(isEventAdded('deadline') || calendarAdded === 'deadline') && placement.calendarSyncStatus?.deadline && (
+                      <SyncStatusIndicator
+                        status={{
+                          ...placement.calendarSyncStatus.deadline,
+                          lastSynced: placement.calendarSyncStatus.deadline.lastSynced 
+                            ? new Date(placement.calendarSyncStatus.deadline.lastSynced) 
+                            : undefined
+                        }}
+                        size="sm"
+                      />
                     )}
-                  </Button>
+                  </div>
                 )}
               </div>
 
@@ -266,24 +318,37 @@ export function PlacementDetailsCard({
                   </p>
                 </div>
                 {placement.assessmentDate && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleCalendarClick('assessment')}
-                    className="h-7 text-[11px] gap-1 rounded-lg w-full border-border"
-                  >
-                    {isEventAdded('assessment') || calendarAdded === 'assessment' ? (
-                      <>
-                        <CheckCircle2 className="h-3 w-3 text-muted-foreground" />
-                        In Calendar
-                      </>
-                    ) : (
-                      <>
-                        <Calendar className="h-3 w-3 text-muted-foreground" />
-                        Sync Calendar
-                      </>
+                  <div className="space-y-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleCalendarClick('assessment')}
+                      className="h-7 text-[11px] gap-1 rounded-lg w-full border-border"
+                    >
+                      {isEventAdded('assessment') || calendarAdded === 'assessment' ? (
+                        <>
+                          <CheckCircle2 className="h-3 w-3 text-muted-foreground" />
+                          In Calendar
+                        </>
+                      ) : (
+                        <>
+                          <Calendar className="h-3 w-3 text-muted-foreground" />
+                          Sync Calendar
+                        </>
+                      )}
+                    </Button>
+                    {(isEventAdded('assessment') || calendarAdded === 'assessment') && placement.calendarSyncStatus?.assessment && (
+                      <SyncStatusIndicator
+                        status={{
+                          ...placement.calendarSyncStatus.assessment,
+                          lastSynced: placement.calendarSyncStatus.assessment.lastSynced 
+                            ? new Date(placement.calendarSyncStatus.assessment.lastSynced) 
+                            : undefined
+                        }}
+                        size="sm"
+                      />
                     )}
-                  </Button>
+                  </div>
                 )}
               </div>
 
@@ -301,24 +366,37 @@ export function PlacementDetailsCard({
                   </p>
                 </div>
                 {placement.interviewDate && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleCalendarClick('interview')}
-                    className="h-7 text-[11px] gap-1 rounded-lg w-full border-border"
-                  >
-                    {isEventAdded('interview') || calendarAdded === 'interview' ? (
-                      <>
-                        <CheckCircle2 className="h-3 w-3 text-muted-foreground" />
-                        In Calendar
-                      </>
-                    ) : (
-                      <>
-                        <Calendar className="h-3 w-3 text-muted-foreground" />
-                        Sync Calendar
-                      </>
+                  <div className="space-y-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleCalendarClick('interview')}
+                      className="h-7 text-[11px] gap-1 rounded-lg w-full border-border"
+                    >
+                      {isEventAdded('interview') || calendarAdded === 'interview' ? (
+                        <>
+                          <CheckCircle2 className="h-3 w-3 text-muted-foreground" />
+                          In Calendar
+                        </>
+                      ) : (
+                        <>
+                          <Calendar className="h-3 w-3 text-muted-foreground" />
+                          Sync Calendar
+                        </>
+                      )}
+                    </Button>
+                    {(isEventAdded('interview') || calendarAdded === 'interview') && placement.calendarSyncStatus?.interview && (
+                      <SyncStatusIndicator
+                        status={{
+                          ...placement.calendarSyncStatus.interview,
+                          lastSynced: placement.calendarSyncStatus.interview.lastSynced 
+                            ? new Date(placement.calendarSyncStatus.interview.lastSynced) 
+                            : undefined
+                        }}
+                        size="sm"
+                      />
                     )}
-                  </Button>
+                  </div>
                 )}
               </div>
             </div>
@@ -347,50 +425,6 @@ export function PlacementDetailsCard({
                         Company Careers Portal
                       </p>
                       <span className="text-[10px] text-muted-foreground">Direct application link</span>
-                    </div>
-                  </div>
-                  <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                </a>
-              )}
-
-              {placement.googleFormLink && (
-                <a
-                  href={placement.googleFormLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-3 rounded-xl bg-muted/40 hover:bg-muted/70 border border-border flex items-center justify-between transition-colors group"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-1.5 rounded-lg bg-card border border-border">
-                      <Link2 className="h-3.5 w-3.5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-foreground">
-                        Google Form Registration
-                      </p>
-                      <span className="text-[10px] text-muted-foreground">Registration link</span>
-                    </div>
-                  </div>
-                  <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                </a>
-              )}
-
-              {placement.placementCellFormLink && (
-                <a
-                  href={placement.placementCellFormLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-3 rounded-xl bg-muted/40 hover:bg-muted/70 border border-border flex items-center justify-between transition-colors group"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-1.5 rounded-lg bg-card border border-border">
-                      <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-foreground">
-                        Placement Cell Form
-                      </p>
-                      <span className="text-[10px] text-muted-foreground">Internal college drive form</span>
                     </div>
                   </div>
                   <ExternalLink className="h-3 w-3 text-muted-foreground" />

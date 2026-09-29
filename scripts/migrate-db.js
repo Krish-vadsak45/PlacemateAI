@@ -4,9 +4,8 @@
  * Run with: node scripts/migrate-db.js
  */
 
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env.local') });
-const mongoose = require('mongoose');
+import 'dotenv/config';
+import mongoose from 'mongoose';
 
 // Connect to MongoDB
 const MONGODB_URI = process.env.MONGODB_URI || '';
@@ -14,13 +13,6 @@ if (!MONGODB_URI) {
   console.error('Please define the MONGODB_URI environment variable inside .env.local');
   process.exit(1);
 }
-
-// Define a simple schema for the migration
-const placementSchema = new mongoose.Schema({
-  aiSummary: String,
-  placementCellFormLink: String,
-  companyFormLink: String,
-}, { strict: false });
 
 async function migrate() {
   try {

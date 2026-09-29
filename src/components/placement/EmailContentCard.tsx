@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
-import { Mail, Copy, Check, ChevronDown, ChevronUp, Calendar, User } from "lucide-react"
+import { Mail, Copy, Check, ChevronDown, ChevronUp } from "lucide-react"
 import { Placement } from "@/types/placement"
 import { useState } from "react"
 

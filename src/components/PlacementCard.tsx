@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { MapPin, DollarSign, ExternalLink, Clock, Sparkles } from "lucide-react"
+import { MapPin, ExternalLink, Clock, Sparkles } from "lucide-react"
 
 interface PlacementCardProps {
   companyName: string

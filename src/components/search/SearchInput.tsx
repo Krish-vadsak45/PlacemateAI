@@ -22,9 +22,11 @@ export default function SearchInput({
   const [localValue, setLocalValue] = useState(value)
   const debouncedValue = useDebounce(localValue, 300)
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setLocalValue(value)
   }, [value])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     onChange(debouncedValue)

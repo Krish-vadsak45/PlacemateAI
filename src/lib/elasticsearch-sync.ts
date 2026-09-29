@@ -1,7 +1,6 @@
 import Placement, { IPlacement } from '@/models/Placement'
 import {
   indexPlacement,
-  updatePlacement,
   deletePlacement,
   bulkIndexPlacements,
   createPlacementsIndex,
@@ -12,6 +11,7 @@ import { invalidateUserCache } from './search-cache'
 /**
  * Transform MongoDB Placement document to Elasticsearch format
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function transformPlacementToElasticsearch(placement: IPlacement): any {
   return {
     userId: placement.userId.toString(),
@@ -84,6 +84,7 @@ export async function syncAllPlacements(userId?: string): Promise<{
     // Ensure index exists
     await createPlacementsIndex()
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: any = {}
     if (userId) {
       query.userId = userId
@@ -128,6 +129,7 @@ export async function syncAllPlacements(userId?: string): Promise<{
 /**
  * Handle MongoDB change stream events
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function handlePlacementChange(change: any): Promise<void> {
   try {
     const operationType = change.operationType
@@ -186,6 +188,7 @@ export async function startChangeStreamListener(): Promise<void> {
 /**
  * Stop change stream listener (if needed)
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let changeStreamInstance: any = null
 
 export function stopChangeStreamListener(): void {

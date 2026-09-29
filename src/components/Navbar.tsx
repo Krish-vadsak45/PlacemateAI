@@ -3,9 +3,8 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Sparkles, LayoutDashboard, User, LogOut, LogIn, Briefcase, Bell } from "lucide-react"
+import { LayoutDashboard, User, LogOut, LogIn, Briefcase } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { motion } from "framer-motion"
 import { signOut, useSession } from "next-auth/react"
 
 export default function Navbar() {

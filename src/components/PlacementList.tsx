@@ -1,11 +1,10 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { 
-  Building2, 
   ExternalLink, 
   Trash2, 
   Filter, 
@@ -48,6 +47,7 @@ export default function PlacementList() {
   const [placements, setPlacements] = useState<Placement[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [filters, setFilters] = useState<any>({})
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
   const [total, setTotal] = useState(0)
@@ -59,6 +59,7 @@ export default function PlacementList() {
   useEffect(() => {
     if (isUpdatingUrl.current) return
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const urlFilters: any = {}
     if (searchParams.get('status')) urlFilters.status = searchParams.get('status')?.split(',')
     if (searchParams.get('cgpaMin')) urlFilters.cgpaMin = parseFloat(searchParams.get('cgpaMin')!)
@@ -96,15 +97,9 @@ export default function PlacementList() {
     const queryString = params.toString()
     isUpdatingUrl.current = true
     router.push(queryString ? `?${queryString}` : window.location.pathname, { scroll: false })
-  }, [searchQuery, filters, page])
+  }, [searchQuery, filters, page, router])
 
-  useEffect(() => {
-    if (session?.user?.id) {
-      fetchPlacements()
-    }
-  }, [session, searchQuery, filters, page])
-
-  const fetchPlacements = async () => {
+  const fetchPlacements = useCallback(async () => {
     try {
       setIsLoading(true)
       const params = new URLSearchParams()
@@ -136,7 +131,15 @@ export default function PlacementList() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [searchQuery, filters, page, limit])
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchPlacements().catch(console.error)
+    }
+  }, [session, fetchPlacements])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleQuickFilter = (filterId: string) => {
     const now = new Date()
@@ -312,9 +315,10 @@ export default function PlacementList() {
         /* PLACEMENT CARDS LIST */
         <div className="space-y-3">
           {placements.map((placement) => {
+            const now = Date.now()
             const isDeadlineUrgent = placement.applicationDeadline && 
-              (new Date(placement.applicationDeadline).getTime() - Date.now() < 48 * 3600 * 1000) &&
-              (new Date(placement.applicationDeadline).getTime() > Date.now())
+              (new Date(placement.applicationDeadline).getTime() - now < 48 * 3600 * 1000) &&
+              (new Date(placement.applicationDeadline).getTime() > now)
 
             return (
               <div

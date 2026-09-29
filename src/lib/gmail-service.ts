@@ -10,6 +10,7 @@ export interface GmailMessage {
 }
 
 export class GmailService {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private gmail: any
 
   constructor(accessToken: string) {
@@ -122,7 +123,9 @@ export class GmailService {
   /**
    * Extract header value from email headers
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private getHeader(headers: any[], name: string): string | null {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const header = headers.find((h: any) => h.name.toLowerCase() === name.toLowerCase())
     return header?.value || null
   }
@@ -130,6 +133,7 @@ export class GmailService {
   /**
    * Extract email body from message payload
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private extractBody(payload: any): string {
     if (!payload) return ""
 

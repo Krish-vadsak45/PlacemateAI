@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -25,7 +24,9 @@ import { cn } from "@/lib/utils"
 interface FilterModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   filters: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onFiltersChange: (filters: any) => void
   aggregations?: {
     status?: { [key: string]: number }
@@ -61,7 +62,7 @@ export default function FilterModal({
     filters.deadlineTo ? new Date(filters.deadlineTo) : undefined
   )
 
-  // Sync internal state when filters prop changes or modal opens
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (open) {
       setLocalFilters(filters)
@@ -69,6 +70,7 @@ export default function FilterModal({
       setDeadlineTo(filters.deadlineTo ? new Date(filters.deadlineTo) : undefined)
     }
   }, [open, filters])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleStatusToggle = (status: string) => {
     const currentStatuses = localFilters.status || []
@@ -131,6 +133,7 @@ export default function FilterModal({
       localFilters[key as keyof typeof localFilters] !== undefined &&
       localFilters[key as keyof typeof localFilters] !== "" &&
       (Array.isArray(localFilters[key as keyof typeof localFilters])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ? (localFilters[key as keyof typeof localFilters] as any[]).length > 0
         : true)
   ).length + (deadlineFrom || deadlineTo ? 1 : 0)

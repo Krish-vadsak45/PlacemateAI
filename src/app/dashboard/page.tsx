@@ -7,8 +7,6 @@ import GmailMonitorToggle from "@/components/GmailMonitorToggle"
 import { 
   Briefcase, 
   Sparkles, 
-  Calendar, 
-  CheckCircle2, 
   Clock, 
   TrendingUp, 
   UserCheck, 

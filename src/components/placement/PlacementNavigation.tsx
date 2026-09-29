@@ -1,15 +1,13 @@
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ArrowRight, LayoutDashboard } from "lucide-react"
-import Link from "next/link"
+import { ArrowLeft, ArrowRight } from "lucide-react"
 
 interface PlacementNavigationProps {
   onBack: () => void
   onNext?: () => void
-  hasPrevious?: boolean
   hasNext?: boolean
 }
 
-export function PlacementNavigation({ onBack, onNext, hasPrevious = true, hasNext = false }: PlacementNavigationProps) {
+export function PlacementNavigation({ onBack, onNext, hasNext = false }: PlacementNavigationProps) {
   return (
     <div className="flex items-center justify-between gap-4 mb-6">
       <Button

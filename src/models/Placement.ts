@@ -14,9 +14,6 @@ export interface IPlacement extends Document {
   assessmentDate?: Date;
   interviewDate?: Date;
   applicationLink?: string;
-  googleFormLink?: string;
-  placementCellFormLink?: string; // New: Placement cell specific form
-  companyFormLink?: string; // New: Company specific form
   emailId?: string;
   status: 'NEW' | 'INTERESTED' | 'APPLIED' | 'ASSESSMENT_SCHEDULED' | 'INTERVIEW_SCHEDULED' | 'REJECTED' | 'SELECTED' | 'NOT_INTERESTED' | 'EXPIRED';
   extractedByAI: boolean;
@@ -52,6 +49,11 @@ export interface IPlacement extends Document {
   reminderSettings?: {
     deadlineReminder: boolean;
     interviewReminder: boolean;
+  };
+  calendarSyncStatus?: {
+    deadline?: { synced: boolean; lastSynced: Date; error?: string };
+    assessment?: { synced: boolean; lastSynced: Date; error?: string };
+    interview?: { synced: boolean; lastSynced: Date; error?: string };
   };
   aiSummary?: string; // AI-generated summary
   processingStatus?: 'RECEIVED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
@@ -108,9 +110,6 @@ const PlacementSchema = new Schema<IPlacement>(
     assessmentDate: Date,
     interviewDate: Date,
     applicationLink: String,
-    googleFormLink: String,
-    placementCellFormLink: { type: String, default: null }, // New: Placement cell specific form
-    companyFormLink: { type: String, default: null }, // New: Company specific form
     emailId: String,
     status: {
       type: String,
@@ -158,6 +157,23 @@ const PlacementSchema = new Schema<IPlacement>(
     reminderSettings: {
       deadlineReminder: { type: Boolean, default: true },
       interviewReminder: { type: Boolean, default: true }
+    },
+    calendarSyncStatus: {
+      deadline: {
+        synced: { type: Boolean, default: false },
+        lastSynced: { type: Date },
+        error: { type: String }
+      },
+      assessment: {
+        synced: { type: Boolean, default: false },
+        lastSynced: { type: Date },
+        error: { type: String }
+      },
+      interview: {
+        synced: { type: Boolean, default: false },
+        lastSynced: { type: Date },
+        error: { type: String }
+      }
     },
     aiSummary: { type: String, default: null }, // AI-generated summary
     processingStatus: {

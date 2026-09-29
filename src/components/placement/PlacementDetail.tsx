@@ -14,6 +14,7 @@ import { PlacementNavigation } from "./PlacementNavigation"
 import { MatchScoreCard } from "./MatchScoreCard"
 import { Button } from "@/components/ui/button"
 import { ExternalLink } from "lucide-react"
+import CalendarEventsList from "@/components/calendar/CalendarEventsList"
 
 export default function PlacementDetail({ placement: initialPlacement }: PlacementDetailProps) {
   const router = useRouter()
@@ -69,6 +70,18 @@ export default function PlacementDetail({ placement: initialPlacement }: Placeme
   }
 
   const handleAddToCalendar = async (eventType: 'deadline' | 'assessment' | 'interview') => {
+    // Check if event already exists
+    const eventField = {
+      deadline: 'deadlineCalendarEventId',
+      assessment: 'assessmentCalendarEventId',
+      interview: 'interviewCalendarEventId'
+    }[eventType]
+
+    if (placement[eventField as keyof typeof placement]) {
+      toast.info("Event already exists in Google Calendar")
+      return
+    }
+
     try {
       const response = await fetch(`/api/placements/${placement._id}/calendar`, {
         method: "POST",
@@ -261,6 +274,16 @@ export default function PlacementDetail({ placement: initialPlacement }: Placeme
                 setEditedPlacement({ ...editedPlacement, [field]: value })
               }
               onAddToCalendar={handleAddToCalendar}
+            />
+
+            <CalendarEventsList
+              placementId={placement._id}
+              onEventUpdated={() => {
+                // Refresh placement data to get updated calendar event IDs
+                fetch(`/api/placements/${placement._id}`)
+                  .then(res => res.json())
+                  .then(data => setPlacement(data))
+              }}
             />
 
             <AISummaryCard

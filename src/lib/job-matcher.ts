@@ -1,6 +1,6 @@
 import mongoose from 'mongoose'
-import User, { IUser } from '@/models/User'
-import Placement, { IPlacement } from '@/models/Placement'
+import User from '@/models/User'
+import { IPlacement } from '@/models/Placement'
 
 export interface MatchBreakdown {
   skillsMatch: number // 0-100

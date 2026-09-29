@@ -4,7 +4,7 @@ async function main() {
   console.log('Attempting to import worker module...')
 
   try {
-    const worker = await import('../src/workers/email-processor-worker')
+    await import('../src/workers/email-processor-worker')
     console.log('Worker module imported successfully')
   } catch (error) {
     console.error('Error importing worker module:', error)

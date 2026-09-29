@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
-import { signIn } from "next-auth/react"
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     // Trigger Google sign-in with Gmail scopes
     // This will redirect the user to Google OAuth consent screen

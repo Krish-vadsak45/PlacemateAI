@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
@@ -16,11 +16,7 @@ export default function GmailMonitorToggle() {
   const [hasAccessToken, setHasAccessToken] = useState(false)
   const [hasPlacementCellEmail, setHasPlacementCellEmail] = useState(false)
 
-  useEffect(() => {
-    fetchStatus()
-  }, [session])
-
-  const fetchStatus = async () => {
+  const fetchStatus = useCallback(async () => {
     try {
       const response = await fetch("/api/gmail/watch")
       const data = await response.json()
@@ -32,7 +28,15 @@ export default function GmailMonitorToggle() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (session) {
+      fetchStatus().catch(console.error)
+    }
+  }, [session, fetchStatus])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const toggleWatch = async (enabled: boolean) => {
     if (!hasAccessToken) {

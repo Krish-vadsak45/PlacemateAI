@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { redisConnection } from "@/lib/queue"
 
-export async function GET(request: Request) {
+export async function GET() {
   const checks = {
     redis: false,
     database: false,

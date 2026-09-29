@@ -7,7 +7,7 @@ import Placement from '@/models/Placement'
 
 // Email processing job handler
 async function emailProcessorHandler(job: Job<EmailProcessingJob>) {
-  const { userId, emailId, historyId } = job.data
+  const { userId, emailId } = job.data
   
   console.log(`Processing email job ${job.id}: userId=${userId}, emailId=${emailId}`)
   

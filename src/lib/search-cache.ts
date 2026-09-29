@@ -32,6 +32,7 @@ export function getRedisClient() {
 /**
  * Generate cache key from search parameters
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function generateCacheKey(userId: string, filters: any): string {
   const keyParts = [
     'search',
@@ -60,6 +61,7 @@ export function generateCacheKey(userId: string, filters: any): string {
 /**
  * Get cached search results
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getCachedSearch(key: string): Promise<any | null> {
   try {
     const client = getRedisClient()
@@ -79,7 +81,8 @@ export async function getCachedSearch(key: string): Promise<any | null> {
 /**
  * Cache search results
  */
-export async function cacheSearch(key: string, data: any, ttl: number = 300): Promise<void> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function cacheSearch(key: string, data: any, ttl: number = 3600): Promise<void> {
   try {
     const client = getRedisClient()
     await client.setEx(key, ttl, JSON.stringify(data))
@@ -107,6 +110,7 @@ export async function invalidateUserCache(userId: string): Promise<void> {
 /**
  * Invalidate cache for a specific placement
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function invalidatePlacementCache(placementId: string): Promise<void> {
   try {
     // This is a simplified approach - in production, you might want to track which searches include a placement

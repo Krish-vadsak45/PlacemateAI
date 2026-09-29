@@ -8,13 +8,10 @@ import {
   Calendar, 
   Brain, 
   Zap, 
-  Briefcase, 
   Check, 
   Mail, 
-  Clock, 
   ChevronRight,
-  TrendingUp,
-  FileText
+  TrendingUp
 } from "lucide-react"
 import { motion } from "framer-motion"
 

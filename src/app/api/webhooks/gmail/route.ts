@@ -200,6 +200,7 @@ export async function POST(request: Request) {
 }
 
 // Verify Pub/Sub signature (optional but recommended for production)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function verifySignature(signature: string, payload: string, secret: string): boolean {
   const hmac = crypto.createHmac("sha256", secret)
   const digest = hmac.update(payload).digest("base64")

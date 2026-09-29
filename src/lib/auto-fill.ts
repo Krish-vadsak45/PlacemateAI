@@ -1,4 +1,3 @@
-import { auth } from "@/lib/auth"
 import User from "@/models/User"
 import connectDB from "@/lib/mongodb"
 
@@ -42,7 +41,7 @@ export class AutoFillService {
     }
   }
 
-  generateAutoFillScript(profile: UserProfile, applicationUrl: string): string {
+  generateAutoFillScript(profile: UserProfile): string {
     return `
       (function() {
         const profile = ${JSON.stringify(profile)};
@@ -119,14 +118,14 @@ export class AutoFillService {
         fillField(fieldPatterns.github, profile.github || '');
         fillField(fieldPatterns.portfolio, profile.portfolio || '');
 
-        console.log('Auto-fill completed for:', applicationUrl);
+        console.log('Auto-fill completed');
       })();
     `
   }
 
-  async generateAutoFillLink(applicationUrl: string, userId: string): Promise<string> {
+  async generateAutoFillLink(userId: string): Promise<string> {
     const profile = await this.getUserProfile(userId)
-    const script = this.generateAutoFillScript(profile, applicationUrl)
+    const script = this.generateAutoFillScript(profile)
     
     // Create a data URL with the auto-fill script
     const encodedScript = encodeURIComponent(script)

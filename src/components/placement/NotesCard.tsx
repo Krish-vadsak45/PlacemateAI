@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { motion, AnimatePresence } from "framer-motion"
-import { FileText, Plus, Trash2, Clock, MessageSquare, StickyNote } from "lucide-react"
+import { Plus, Trash2, Clock, StickyNote } from "lucide-react"
 import { Placement } from "@/types/placement"
 import { useState } from "react"
 
