@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import PlacementCard from "@/components/PlacementCard"
 import PlacementList from "@/components/PlacementList"
 import { Button } from "@/components/ui/button"
-import { Plus, Filter, Sparkles, Calendar, TrendingUp, Target } from "lucide-react"
+import { Plus, Filter, Sparkles, Calendar, TrendingUp, Target, Briefcase, CheckCircle, Clock } from "lucide-react"
 import GmailMonitorToggle from "@/components/GmailMonitorToggle"
 
 export default async function Dashboard() {
@@ -14,50 +14,50 @@ export default async function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-red-500/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-1/2 -left-40 w-96 h-96 bg-red-600/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute -bottom-40 right-1/4 w-96 h-96 bg-red-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-      </div>
-
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 relative overflow-hidden">
       <div className="container mx-auto px-4 py-8 md:py-12 relative z-10">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-red-600 to-red-500 dark:from-red-500 dark:to-red-400 bg-clip-text text-transparent mb-2">
-              Dashboard
-            </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-300">Track your placement opportunities</p>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-2xl bg-gray-200 dark:bg-gray-800">
+                <Briefcase className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+              </div>
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100">
+                Dashboard
+              </h1>
+            </div>
+            <p className="text-lg text-gray-600 dark:text-gray-300 pl-1">
+              Track your placement opportunities
+            </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-2 border-red-500/50 hover:bg-red-500/10 transition-all">
+          <div className="flex gap-3">
+            <Button variant="outline" size="default" className="gap-2">
               <Filter className="h-4 w-4" />
               Filter
             </Button>
-            <Button size="sm" className="gap-2 bg-red-600 hover:bg-red-700 hover:shadow-lg hover:shadow-red-500/30 transition-all">
+            <Button size="default" className="gap-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200">
               <Plus className="h-4 w-4" />
               Add Opportunity
             </Button>
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Gmail Monitor Toggle */}
           <GmailMonitorToggle />
 
           {/* Welcome Card */}
-          <div className="bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border border-red-200 dark:border-red-800 rounded-2xl p-8 shadow-lg hover:scale-[1.01] transition-transform">
-            <div className="flex items-start gap-4">
-              <div className="p-3 rounded-xl bg-white dark:bg-gray-800 shadow-md animate-bounce">
-                <Sparkles className="h-8 w-8 text-red-600 dark:text-red-400" />
+          <div className="relative overflow-hidden bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300">
+            <div className="relative flex items-start gap-6">
+              <div className="p-4 rounded-2xl bg-gray-100 dark:bg-gray-800">
+                <Sparkles className="h-8 w-8 text-gray-700 dark:text-gray-300" />
               </div>
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-2">
+              <div className="flex-1 space-y-2">
+                <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                   Welcome, {session.user.name}!
                 </h2>
-                <p className="text-gray-600 dark:text-gray-300">
+                <p className="text-gray-600 dark:text-gray-300 text-lg">
                   Get started by connecting your Gmail account to automatically detect placement emails.
                 </p>
               </div>
@@ -66,10 +66,10 @@ export default async function Dashboard() {
 
           {/* Stats Cards */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-lg hover:shadow-xl hover:shadow-red-500/10 hover:-translate-y-2 transition-all">
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-red-500 to-red-600">
-                  <Calendar className="h-6 w-6 text-white" />
+            <div className="group relative overflow-hidden bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+              <div className="relative flex items-start gap-4">
+                <div className="p-3 rounded-xl bg-gray-100 dark:bg-gray-800">
+                  <Clock className="h-6 w-6 text-gray-700 dark:text-gray-300" />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">Upcoming Deadlines</h3>
@@ -78,10 +78,10 @@ export default async function Dashboard() {
               </div>
             </div>
             
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-lg hover:shadow-xl hover:shadow-red-500/10 hover:-translate-y-2 transition-all">
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-red-500 to-red-600">
-                  <Target className="h-6 w-6 text-white" />
+            <div className="group relative overflow-hidden bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+              <div className="relative flex items-start gap-4">
+                <div className="p-3 rounded-xl bg-gray-100 dark:bg-gray-800">
+                  <CheckCircle className="h-6 w-6 text-gray-700 dark:text-gray-300" />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">Applications</h3>
@@ -90,10 +90,10 @@ export default async function Dashboard() {
               </div>
             </div>
             
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-lg hover:shadow-xl hover:shadow-red-500/10 hover:-translate-y-2 transition-all">
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-red-500 to-red-600">
-                  <TrendingUp className="h-6 w-6 text-white" />
+            <div className="group relative overflow-hidden bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+              <div className="relative flex items-start gap-4">
+                <div className="p-3 rounded-xl bg-gray-100 dark:bg-gray-800">
+                  <TrendingUp className="h-6 w-6 text-gray-700 dark:text-gray-300" />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">Statistics</h3>
@@ -117,10 +117,15 @@ export default async function Dashboard() {
           </div>
 
           {/* Recent Opportunities */}
-          <div>
-            <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-red-600 to-red-500 dark:from-red-500 dark:to-red-400 bg-clip-text text-transparent">
-              Recent Opportunities
-            </h2>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-gray-200 dark:bg-gray-800">
+                <Briefcase className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                Recent Opportunities
+              </h2>
+            </div>
             <PlacementList />
           </div>
         </div>

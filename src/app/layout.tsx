@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SessionProvider } from "@/components/session-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { initializeChangeStream } from "@/lib/change-stream";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,6 +21,11 @@ export const metadata: Metadata = {
   title: "PlaceMate AI - Personalized Placement Assistant",
   description: "Convert placement emails into structured opportunities with smart reminders and AI preparation guidance",
 };
+
+// Initialize MongoDB change stream for Elasticsearch sync
+if (typeof window === 'undefined') {
+  initializeChangeStream()
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

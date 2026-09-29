@@ -1,12 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useSession } from "next-auth/react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Mail, Calendar, Building, ExternalLink, Trash2, Loader2 } from "lucide-react"
+import { Mail, Calendar, Building, ExternalLink, Trash2, Loader2, Filter, ChevronLeft, ChevronRight } from "lucide-react"
 import { toast } from "sonner"
+import SearchInput from "@/components/search/SearchInput"
+import FilterModal from "@/components/search/FilterModal"
+import QuickFilters from "@/components/search/QuickFilters"
 
 interface Placement {
   _id: string
@@ -24,22 +28,90 @@ interface Placement {
 
 export default function PlacementList() {
   const { data: session } = useSession()
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const [placements, setPlacements] = useState<Placement[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
+  const [filters, setFilters] = useState<any>({})
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(parseInt(searchParams.get('page') || '1'))
+  const [limit] = useState(20)
+  const isUpdatingUrl = useRef(false)
+
+  // Sync URL params to state on mount
+  useEffect(() => {
+    if (isUpdatingUrl.current) return
+    
+    const urlFilters: any = {}
+    if (searchParams.get('status')) urlFilters.status = searchParams.get('status')?.split(',')
+    if (searchParams.get('cgpaMin')) urlFilters.cgpaMin = parseFloat(searchParams.get('cgpaMin')!)
+    if (searchParams.get('cgpaMax')) urlFilters.cgpaMax = parseFloat(searchParams.get('cgpaMax')!)
+    if (searchParams.get('matchScoreMin')) urlFilters.matchScoreMin = parseInt(searchParams.get('matchScoreMin')!)
+    if (searchParams.get('matchScoreMax')) urlFilters.matchScoreMax = parseInt(searchParams.get('matchScoreMax')!)
+    if (searchParams.get('deadlineFrom')) urlFilters.deadlineFrom = searchParams.get('deadlineFrom')
+    if (searchParams.get('deadlineTo')) urlFilters.deadlineTo = searchParams.get('deadlineTo')
+    if (searchParams.get('hasAttachments')) urlFilters.hasAttachments = searchParams.get('hasAttachments') === 'true'
+    if (searchParams.get('hasCalendarEvent')) urlFilters.hasCalendarEvent = searchParams.get('hasCalendarEvent') === 'true'
+    
+    setFilters(urlFilters)
+  }, [searchParams])
+
+  // Update URL when filters change
+  useEffect(() => {
+    if (isUpdatingUrl.current) {
+      isUpdatingUrl.current = false
+      return
+    }
+
+    const params = new URLSearchParams()
+    if (searchQuery) params.set('q', searchQuery)
+    if (filters.status?.length) params.set('status', filters.status.join(','))
+    if (filters.cgpaMin) params.set('cgpaMin', filters.cgpaMin.toString())
+    if (filters.cgpaMax) params.set('cgpaMax', filters.cgpaMax.toString())
+    if (filters.matchScoreMin) params.set('matchScoreMin', filters.matchScoreMin.toString())
+    if (filters.matchScoreMax) params.set('matchScoreMax', filters.matchScoreMax.toString())
+    if (filters.deadlineFrom) params.set('deadlineFrom', filters.deadlineFrom)
+    if (filters.deadlineTo) params.set('deadlineTo', filters.deadlineTo)
+    if (filters.hasAttachments !== undefined) params.set('hasAttachments', filters.hasAttachments.toString())
+    if (filters.hasCalendarEvent !== undefined) params.set('hasCalendarEvent', filters.hasCalendarEvent.toString())
+    if (page > 1) params.set('page', page.toString())
+
+    const queryString = params.toString()
+    isUpdatingUrl.current = true
+    router.push(queryString ? `?${queryString}` : window.location.pathname, { scroll: false })
+  }, [searchQuery, filters, page])
 
   useEffect(() => {
     if (session?.user?.id) {
       fetchPlacements()
     }
-  }, [session])
+  }, [session, searchQuery, filters, page])
 
   const fetchPlacements = async () => {
     try {
-      const response = await fetch("/api/placements")
+      setIsLoading(true)
+      const params = new URLSearchParams()
+      if (searchQuery) params.set('q', searchQuery)
+      if (filters.status?.length) params.set('status', filters.status.join(','))
+      if (filters.cgpaMin) params.set('cgpaMin', filters.cgpaMin.toString())
+      if (filters.cgpaMax) params.set('cgpaMax', filters.cgpaMax.toString())
+      if (filters.matchScoreMin) params.set('matchScoreMin', filters.matchScoreMin.toString())
+      if (filters.matchScoreMax) params.set('matchScoreMax', filters.matchScoreMax.toString())
+      if (filters.deadlineFrom) params.set('deadlineFrom', filters.deadlineFrom)
+      if (filters.deadlineTo) params.set('deadlineTo', filters.deadlineTo)
+      if (filters.hasAttachments !== undefined) params.set('hasAttachments', filters.hasAttachments.toString())
+      if (filters.hasCalendarEvent !== undefined) params.set('hasCalendarEvent', filters.hasCalendarEvent.toString())
+      params.set('page', page.toString())
+      params.set('limit', limit.toString())
+
+      const response = await fetch(`/api/placements/search?${params.toString()}`)
       const data = await response.json()
       
       if (response.ok) {
         setPlacements(data.placements || [])
+        setTotal(data.total || 0)
       } else {
         toast.error("Failed to fetch placements")
       }
@@ -48,6 +120,29 @@ export default function PlacementList() {
       toast.error("Failed to fetch placements")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleQuickFilter = (filterId: string) => {
+    const now = new Date()
+    const tomorrow = new Date(now)
+    tomorrow.setDate(tomorrow.getDate() + 7)
+    const urgentDeadline = new Date(now)
+    urgentDeadline.setDate(urgentDeadline.getDate() + 1)
+
+    switch (filterId) {
+      case 'this-week':
+        setFilters({ ...filters, deadlineFrom: now.toISOString(), deadlineTo: tomorrow.toISOString() })
+        break
+      case 'high-match':
+        setFilters({ ...filters, matchScoreMin: 80 })
+        break
+      case 'urgent':
+        setFilters({ ...filters, deadlineFrom: now.toISOString(), deadlineTo: urgentDeadline.toISOString() })
+        break
+      case 'applied':
+        setFilters({ ...filters, status: ['APPLIED', 'ASSESSMENT_SCHEDULED', 'INTERVIEW_SCHEDULED'] })
+        break
     }
   }
 
@@ -110,6 +205,8 @@ export default function PlacementList() {
     return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-500"
   }
 
+  const totalPages = Math.ceil(total / limit)
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -118,116 +215,178 @@ export default function PlacementList() {
     )
   }
 
-  if (placements.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-12">
-          <div className="text-center">
-            <Mail className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">No placement emails detected yet</h3>
-            <p className="text-muted-foreground text-sm">
-              Enable Gmail monitoring to automatically detect placement emails from your placement cell.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
   return (
     <div className="space-y-4">
-      {placements.map((placement) => (
-        <Card key={placement._id} className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => window.location.href = `/placements/${placement._id}`}>
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <CardTitle className="text-lg">{placement.companyName}</CardTitle>
-                <CardDescription className="mt-1">{placement.jobRole}</CardDescription>
-              </div>
-              <div className="flex flex-col gap-2 items-end">
-                {placement.matchScore !== undefined && (
-                  <Badge className={`border-2 ${getMatchScoreColor(placement.matchScore)}`}>
-                    {placement.matchScore}% Match
-                  </Badge>
-                )}
-                <Badge className={getStatusColor(placement.status)}>
-                  {placement.status.replace(/_/g, " ")}
-                </Badge>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {placement.emailSubject && (
-                <div className="flex items-start gap-2 text-sm">
-                  <Mail className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                  <div className="flex-1">
-                    <p className="font-medium">{placement.emailSubject}</p>
-                    <p className="text-muted-foreground text-xs">{placement.emailFrom}</p>
-                  </div>
-                </div>
-              )}
-              
-              {placement.emailDate && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>{new Date(placement.emailDate).toLocaleDateString()}</span>
-                </div>
-              )}
+      {/* Search and Filter Bar */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <div className="flex-1 w-full">
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search placements..."
+          />
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => setIsFilterModalOpen(true)}
+          className="gap-2"
+        >
+          <Filter className="h-4 w-4" />
+          Filters
+        </Button>
+      </div>
 
-              {placement.applicationLink && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => window.open(placement.applicationLink, "_blank")}
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Apply Now
-                </Button>
-              )}
+      {/* Quick Filters */}
+      <QuickFilters onFilterSelect={handleQuickFilter} />
 
-              <div className="flex items-center justify-between pt-2 border-t">
-                <div className="flex gap-2">
-                  {placement.status === "NEW" && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateStatus(placement._id, "INTERESTED")}
-                      >
-                        Mark Interested
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateStatus(placement._id, "NOT_INTERESTED")}
-                      >
-                        Not Interested
-                      </Button>
-                    </>
-                  )}
-                  {placement.status === "INTERESTED" && (
-                    <Button
-                      size="sm"
-                      onClick={() => updateStatus(placement._id, "APPLIED")}
-                    >
-                      Mark Applied
-                    </Button>
-                  )}
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => deletePlacement(placement._id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+      {/* Results Count */}
+      <div className="text-sm text-muted-foreground">
+        {total} placement{total !== 1 ? 's' : ''} found
+      </div>
+
+      {placements.length === 0 ? (
+        <Card>
+          <CardContent className="py-12">
+            <div className="text-center">
+              <Mail className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-semibold mb-2">No placements found</h3>
+              <p className="text-muted-foreground text-sm">
+                Try adjusting your search or filters to find what you're looking for.
+              </p>
             </div>
           </CardContent>
         </Card>
-      ))}
+      ) : (
+        <>
+          {placements.map((placement) => (
+            <Card key={placement._id} className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => window.location.href = `/placements/${placement._id}`}>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg">{placement.companyName}</CardTitle>
+                    <CardDescription className="mt-1">{placement.jobRole}</CardDescription>
+                  </div>
+                  <div className="flex flex-col gap-2 items-end">
+                    {placement.matchScore !== undefined && (
+                      <Badge className={`border-2 ${getMatchScoreColor(placement.matchScore)}`}>
+                        {placement.matchScore}% Match
+                      </Badge>
+                    )}
+                    <Badge className={getStatusColor(placement.status)}>
+                      {placement.status.replace(/_/g, " ")}
+                    </Badge>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {placement.emailSubject && (
+                    <div className="flex items-start gap-2 text-sm">
+                      <Mail className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                      <div className="flex-1">
+                        <p className="font-medium">{placement.emailSubject}</p>
+                        <p className="text-muted-foreground text-xs">{placement.emailFrom}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {placement.emailDate && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span>{new Date(placement.emailDate).toLocaleDateString()}</span>
+                    </div>
+                  )}
+
+                  {placement.applicationLink && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => window.open(placement.applicationLink, "_blank")}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Apply Now
+                    </Button>
+                  )}
+
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <div className="flex gap-2">
+                      {placement.status === "NEW" && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateStatus(placement._id, "INTERESTED")}
+                          >
+                            Mark Interested
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateStatus(placement._id, "NOT_INTERESTED")}
+                          >
+                            Not Interested
+                          </Button>
+                        </>
+                      )}
+                      {placement.status === "INTERESTED" && (
+                        <Button
+                          size="sm"
+                          onClick={() => updateStatus(placement._id, "APPLIED")}
+                        >
+                          Mark Applied
+                        </Button>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => deletePlacement(placement._id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Page {page} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Filter Modal */}
+      <FilterModal
+        open={isFilterModalOpen}
+        onOpenChange={setIsFilterModalOpen}
+        filters={filters}
+        onFiltersChange={setFilters}
+      />
     </div>
   )
 }
