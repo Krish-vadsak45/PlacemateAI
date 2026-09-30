@@ -15,12 +15,23 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const status = searchParams.get("status")
+    const tagsParam = searchParams.get("tags")
+    const noteQuery = searchParams.get("noteQ")
     const limit = parseInt(searchParams.get("limit") || "20")
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: any = { userId: session.user.id }
     if (status) {
       query.status = status
+    }
+    if (tagsParam) {
+      const tagList = tagsParam.split(",").map((t) => t.trim()).filter(Boolean)
+      if (tagList.length > 0) {
+        query.tags = { $in: tagList }
+      }
+    }
+    if (noteQuery) {
+      query["notes.content"] = { $regex: noteQuery, $options: "i" }
     }
 
     const placements = await Placement.find(query)

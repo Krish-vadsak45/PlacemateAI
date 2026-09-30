@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { MapPin, ExternalLink, Clock, Sparkles } from "lucide-react"
+import TagBadge from "./placement/TagBadge"
 
 interface PlacementCardProps {
   companyName: string
@@ -12,6 +13,8 @@ interface PlacementCardProps {
   status: string
   applicationLink?: string
   matchScore?: number
+  tags?: string[]
+  onTagClick?: (tag: string) => void
   onViewDetails?: () => void
 }
 
@@ -24,6 +27,8 @@ export default function PlacementCard({
   status,
   applicationLink,
   matchScore,
+  tags = [],
+  onTagClick,
   onViewDetails,
 }: PlacementCardProps) {
   const getStatusColor = (s: string) => {
@@ -92,6 +97,23 @@ export default function PlacementCard({
                 </span>
               )}
             </div>
+
+            {tags && tags.length > 0 && (
+              <div className="flex items-center gap-1.5 pt-1.5 flex-wrap">
+                {tags.map((tag) => (
+                  <TagBadge
+                    key={tag}
+                    tag={tag}
+                    size="sm"
+                    onClick={
+                      onTagClick
+                        ? () => onTagClick(tag)
+                        : undefined
+                    }
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

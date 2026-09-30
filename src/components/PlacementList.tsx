@@ -15,12 +15,14 @@ import {
   MapPin, 
   Clock,
   ArrowRight,
-  Briefcase
+  Briefcase,
+  Tag as TagIcon
 } from "lucide-react"
 import { toast } from "sonner"
 import SearchInput from "@/components/search/SearchInput"
 import FilterModal from "@/components/search/FilterModal"
 import QuickFilters from "@/components/search/QuickFilters"
+import TagBadge from "./placement/TagBadge"
 import Link from "next/link"
 
 interface Placement {
@@ -31,6 +33,7 @@ interface Placement {
   location?: string
   applicationDeadline?: string
   status: string
+  tags?: string[]
   emailSubject?: string
   emailFrom?: string
   emailDate?: string
@@ -53,7 +56,18 @@ export default function PlacementList() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(parseInt(searchParams.get('page') || '1'))
   const [limit] = useState(20)
+  const [availableTags, setAvailableTags] = useState<Array<{ tag: string; count: number }>>([])
   const isUpdatingUrl = useRef(false)
+
+  // Fetch available tags
+  useEffect(() => {
+    fetch('/api/placements/tags')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.tags) setAvailableTags(data.tags)
+      })
+      .catch((err) => console.error("Error fetching tags:", err))
+  }, [])
 
   // Sync URL params to state on mount
   useEffect(() => {
@@ -62,6 +76,7 @@ export default function PlacementList() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const urlFilters: any = {}
     if (searchParams.get('status')) urlFilters.status = searchParams.get('status')?.split(',')
+    if (searchParams.get('tags')) urlFilters.tags = searchParams.get('tags')?.split(',')
     if (searchParams.get('cgpaMin')) urlFilters.cgpaMin = parseFloat(searchParams.get('cgpaMin')!)
     if (searchParams.get('cgpaMax')) urlFilters.cgpaMax = parseFloat(searchParams.get('cgpaMax')!)
     if (searchParams.get('matchScoreMin')) urlFilters.matchScoreMin = parseInt(searchParams.get('matchScoreMin')!)
@@ -84,6 +99,7 @@ export default function PlacementList() {
     const params = new URLSearchParams()
     if (searchQuery) params.set('q', searchQuery)
     if (filters.status?.length) params.set('status', filters.status.join(','))
+    if (filters.tags?.length) params.set('tags', filters.tags.join(','))
     if (filters.cgpaMin) params.set('cgpaMin', filters.cgpaMin.toString())
     if (filters.cgpaMax) params.set('cgpaMax', filters.cgpaMax.toString())
     if (filters.matchScoreMin) params.set('matchScoreMin', filters.matchScoreMin.toString())
@@ -99,12 +115,22 @@ export default function PlacementList() {
     router.push(queryString ? `?${queryString}` : window.location.pathname, { scroll: false })
   }, [searchQuery, filters, page, router])
 
+  const handleTagToggle = (tag: string) => {
+    const current = filters.tags || []
+    const updated = current.includes(tag)
+      ? current.filter((t: string) => t !== tag)
+      : [...current, tag]
+    setFilters({ ...filters, tags: updated.length > 0 ? updated : undefined })
+    setPage(1)
+  }
+
   const fetchPlacements = useCallback(async () => {
     try {
       setIsLoading(true)
       const params = new URLSearchParams()
       if (searchQuery) params.set('q', searchQuery)
       if (filters.status?.length) params.set('status', filters.status.join(','))
+      if (filters.tags?.length) params.set('tags', filters.tags.join(','))
       if (filters.cgpaMin) params.set('cgpaMin', filters.cgpaMin.toString())
       if (filters.cgpaMax) params.set('cgpaMax', filters.cgpaMax.toString())
       if (filters.matchScoreMin) params.set('matchScoreMin', filters.matchScoreMin.toString())
@@ -262,6 +288,47 @@ export default function PlacementList() {
             {total} {total === 1 ? "opportunity" : "opportunities"}
           </span>
         </div>
+
+        {/* Available Tags Filter Bar */}
+        {availableTags.length > 0 && (
+          <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-border/50 text-xs">
+            <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+              <TagIcon className="h-3 w-3 text-muted-foreground" />
+              Tags:
+            </span>
+            {availableTags.map(({ tag, count }) => {
+              const isSelected = filters.tags?.includes(tag)
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => handleTagToggle(tag)}
+                  className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-lg border transition-all cursor-pointer ${
+                    isSelected
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs font-semibold"
+                      : "bg-secondary/60 text-muted-foreground hover:text-foreground border-border hover:bg-secondary"
+                  }`}
+                >
+                  <span>#{tag}</span>
+                  <span className="text-[10px] opacity-75">({count})</span>
+                </button>
+              )
+            })}
+            {filters.tags && filters.tags.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const updated = { ...filters }
+                  delete updated.tags
+                  setFilters(updated)
+                }}
+                className="text-[11px] text-muted-foreground hover:text-foreground underline ml-1 cursor-pointer"
+              >
+                Clear tags
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* SKELETON LOADING STATE */}
@@ -381,6 +448,19 @@ export default function PlacementList() {
                           </span>
                         )}
                       </div>
+
+                      {placement.tags && placement.tags.length > 0 && (
+                        <div className="flex items-center gap-1.5 pt-1.5 flex-wrap">
+                          {placement.tags.map((tag) => (
+                            <TagBadge
+                              key={tag}
+                              tag={tag}
+                              size="sm"
+                              onClick={() => handleTagToggle(tag)}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
 

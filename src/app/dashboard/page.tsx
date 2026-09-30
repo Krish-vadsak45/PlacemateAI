@@ -10,7 +10,8 @@ import {
   Clock, 
   TrendingUp, 
   UserCheck, 
-  Building2 
+  Building2,
+  BarChart3 
 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -77,6 +78,12 @@ export default async function Dashboard() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Link href="/analytics">
+              <Button variant="outline" size="sm" className="gap-2 text-xs h-9 rounded-xl border-border bg-card">
+                <BarChart3 className="h-3.5 w-3.5 text-primary" />
+                Analytics & Insights
+              </Button>
+            </Link>
             <Link href="/profile">
               <Button variant="outline" size="sm" className="gap-2 text-xs h-9 rounded-xl border-border bg-card">
                 <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />

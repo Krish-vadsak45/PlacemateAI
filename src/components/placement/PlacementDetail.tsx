@@ -7,7 +7,8 @@ import { Placement, PlacementDetailProps } from "@/types/placement"
 import { StatusBadge } from "./StatusBadge"
 import { AISummaryCard } from "./AISummaryCard"
 import { PlacementDetailsCard } from "./PlacementDetailsCard"
-import { NotesCard } from "./NotesCard"
+import NotesEditor from "./NotesEditor"
+import TagManager from "./TagManager"
 import { EmailContentCard } from "./EmailContentCard"
 import { ApplicationHistoryCard } from "./ApplicationHistoryCard"
 import { PlacementNavigation } from "./PlacementNavigation"
@@ -15,13 +16,13 @@ import { MatchScoreCard } from "./MatchScoreCard"
 import { Button } from "@/components/ui/button"
 import { ExternalLink } from "lucide-react"
 import CalendarEventsList from "@/components/calendar/CalendarEventsList"
+import { PlacementCopilotCard } from "./PlacementCopilotCard"
 
 export default function PlacementDetail({ placement: initialPlacement }: PlacementDetailProps) {
   const router = useRouter()
   const [placement, setPlacement] = useState<Placement>(initialPlacement)
   const [isEditing, setIsEditing] = useState(false)
   const [editedPlacement, setEditedPlacement] = useState<Placement>(initialPlacement)
-  const [newNote, setNewNote] = useState("")
   const [aiSummary, setAiSummary] = useState<string | null>(initialPlacement.aiSummary || null)
   const [isLoadingSummary, setIsLoadingSummary] = useState(false)
   const [showEmail, setShowEmail] = useState(false)
@@ -133,60 +134,6 @@ export default function PlacementDetail({ placement: initialPlacement }: Placeme
     }
   }
 
-  const handleAddNote = async () => {
-    if (!newNote.trim()) return
-
-    try {
-      const updatedNotes = [
-        ...(placement.notes || []),
-        {
-          id: Date.now().toString(),
-          content: newNote,
-          createdAt: new Date().toISOString(),
-        },
-      ]
-
-      const response = await fetch(`/api/placements/${placement._id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notes: updatedNotes }),
-      })
-
-      if (response.ok) {
-        setPlacement({ ...placement, notes: updatedNotes })
-        setNewNote("")
-        toast.success("Note added successfully")
-      } else {
-        toast.error("Failed to add note")
-      }
-    } catch (error) {
-      console.error("Error adding note:", error)
-      toast.error("Failed to add note")
-    }
-  }
-
-  const handleDeleteNote = async (noteId: string) => {
-    try {
-      const updatedNotes = placement.notes?.filter((n) => n.id !== noteId) || []
-
-      const response = await fetch(`/api/placements/${placement._id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notes: updatedNotes }),
-      })
-
-      if (response.ok) {
-        setPlacement({ ...placement, notes: updatedNotes })
-        toast.success("Note deleted successfully")
-      } else {
-        toast.error("Failed to delete note")
-      }
-    } catch (error) {
-      console.error("Error deleting note:", error)
-      toast.error("Failed to delete note")
-    }
-  }
-
   const handleBack = () => {
     router.push("/dashboard")
   }
@@ -234,6 +181,18 @@ export default function PlacementDetail({ placement: initialPlacement }: Placeme
                   {placement.emailDate && (
                     <span>Received {new Date(placement.emailDate).toLocaleDateString()}</span>
                   )}
+                </div>
+
+                {/* Tags Management */}
+                <div className="pt-1.5">
+                  <TagManager
+                    placementId={placement._id}
+                    tags={placement.tags || []}
+                    onTagsChange={(newTags) => {
+                      setPlacement({ ...placement, tags: newTags })
+                      setEditedPlacement({ ...editedPlacement, tags: newTags })
+                    }}
+                  />
                 </div>
               </div>
             </div>
@@ -292,13 +251,16 @@ export default function PlacementDetail({ placement: initialPlacement }: Placeme
               onGenerateSummary={generateAISummary}
             />
 
-            <NotesCard
-              placement={placement}
-              newNote={newNote}
-              onNoteChange={setNewNote}
-              onAddNote={handleAddNote}
-              onDeleteNote={handleDeleteNote}
-            />
+            <div className="glass-panel rounded-3xl p-6 border border-border/80 shadow-md">
+              <NotesEditor
+                placementId={placement._id}
+                notes={placement.notes || []}
+                onNotesChange={(updatedNotes) => {
+                  setPlacement({ ...placement, notes: updatedNotes })
+                  setEditedPlacement({ ...editedPlacement, notes: updatedNotes })
+                }}
+              />
+            </div>
 
             <EmailContentCard
               placement={placement}
@@ -310,7 +272,18 @@ export default function PlacementDetail({ placement: initialPlacement }: Placeme
           </div>
 
           {/* RIGHT SIDEBAR (5 cols) */}
-          <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-20">
+          <div className="lg:col-span-5 space-y-6">
+            <PlacementCopilotCard
+              placement={placement}
+              onPlacementUpdated={(updatedPlacement) => {
+                setPlacement(updatedPlacement)
+                setEditedPlacement(updatedPlacement)
+                if (updatedPlacement.aiSummary) {
+                  setAiSummary(updatedPlacement.aiSummary)
+                }
+              }}
+            />
+
             <MatchScoreCard
               matchScore={placement.matchScore}
               matchBreakdown={placement.matchBreakdown}

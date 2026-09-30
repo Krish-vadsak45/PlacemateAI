@@ -88,6 +88,7 @@ interface DlqStats {
 interface PlacementStats {
   failed: number
   processing: number
+  total?: number
 }
 
 function generateAlerts(

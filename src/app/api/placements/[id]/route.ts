@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import connectDB from "@/lib/mongodb"
 import Placement from "@/models/Placement"
+import { invalidateAnalyticsCache } from "@/lib/analytics-cache"
 
 export async function PATCH(
   request: Request,
@@ -29,7 +30,8 @@ export async function PATCH(
       interviewDate,
       attachments,
       applicationHistory,
-      calendarEventId
+      calendarEventId,
+      tags
     } = body
 
     await connectDB()
@@ -56,6 +58,7 @@ export async function PATCH(
         ...(attachments !== undefined && { attachments }),
         ...(applicationHistory !== undefined && { applicationHistory }),
         ...(calendarEventId !== undefined && { calendarEventId }),
+        ...(tags !== undefined && { tags }),
       },
       { returnDocument: 'after' }
     )
@@ -63,6 +66,8 @@ export async function PATCH(
     if (!placement) {
       return NextResponse.json({ error: "Placement not found" }, { status: 404 })
     }
+
+    await invalidateAnalyticsCache(session.user.id)
 
     return NextResponse.json({ 
       success: true, 
@@ -100,6 +105,8 @@ export async function DELETE(
     if (!placement) {
       return NextResponse.json({ error: "Placement not found" }, { status: 404 })
     }
+
+    await invalidateAnalyticsCache(session.user.id)
 
     return NextResponse.json({ 
       success: true, 

@@ -36,13 +36,13 @@ export default function EventHistory({ placementId }: EventHistoryProps) {
   const [expandedEntries, setExpandedEntries] = useState<Set<string>>(new Set())
   const [filter, setFilter] = useState<'all' | 'create' | 'update' | 'delete'>('all')
 
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     try {
       setIsLoading(true)
-      const url = filter === 'all' 
+      const url = filter === 'all'
         ? `/api/placements/${placementId}/calendar/history`
         : `/api/placements/${placementId}/calendar/history?operation=${filter}`
-      
+
       const response = await fetch(url)
       const data = await response.json()
 
@@ -54,12 +54,11 @@ export default function EventHistory({ placementId }: EventHistoryProps) {
     } finally {
       setIsLoading(false)
     }
-  }
-  /* eslint-disable react-hooks/set-state-in-effect */
+  }, [placementId, filter])
+
   useEffect(() => {
     fetchHistory()
   }, [placementId, filter, fetchHistory])
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const toggleEntry = (id: string) => {
     const newExpanded = new Set(expandedEntries)

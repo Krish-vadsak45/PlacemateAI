@@ -29,6 +29,12 @@ export interface IUser extends Document {
     gmailWatchEnabled?: boolean;
     gmailWatchHistoryId?: string;
   };
+  themePreferences?: {
+    theme?: 'light' | 'dark' | 'system';
+    preset?: string;
+    accentColor?: string;
+    highContrast?: boolean;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -86,6 +92,12 @@ const UserSchema = new Schema<IUser>(
       calendarToken: String,
       gmailWatchEnabled: { type: Boolean, default: false },
       gmailWatchHistoryId: String,
+    },
+    themePreferences: {
+      theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
+      preset: { type: String, default: 'default' },
+      accentColor: { type: String, default: 'default' },
+      highContrast: { type: Boolean, default: false },
     },
   },
   {

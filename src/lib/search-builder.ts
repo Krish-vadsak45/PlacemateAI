@@ -5,6 +5,7 @@ export interface SearchFilters {
   status?: string[]
   company?: string[]
   location?: string[]
+  tags?: string[]
   cgpaMin?: number
   cgpaMax?: number
   matchScoreMin?: number
@@ -81,6 +82,11 @@ export function buildSearchQuery(filters: SearchFilters, userId: string): any {
   // Location filter
   if (filters.location && filters.location.length > 0) {
     filter.push({ terms: { 'location.keyword': filters.location } })
+  }
+
+  // Tags filter
+  if (filters.tags && filters.tags.length > 0) {
+    filter.push({ terms: { 'tags.keyword': filters.tags } })
   }
 
   // CGPA range filter

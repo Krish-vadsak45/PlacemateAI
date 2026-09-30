@@ -23,13 +23,18 @@ import {
   Info, 
   Sparkles,
   Building,
-  FileText
+  FileText,
+  Palette
 } from "lucide-react"
 import { profileSchema, type ProfileFormData } from "@/lib/validations/profile"
+import { useTheme } from "@/components/theme-provider"
+import ThemeCustomizerModal from "@/components/ThemeCustomizerModal"
 
 export default function ProfilePage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { theme, preset, accentColor, highContrast } = useTheme()
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -486,6 +491,76 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
+
+          {/* APPEARANCE & THEME CUSTOMIZATION CARD */}
+          <div className="glass-panel p-6 rounded-2xl border border-border space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                  <Palette className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    Appearance &amp; Dark Mode
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Customize color scheme, presets, accent colors, and contrast
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsThemeModalOpen(true)}
+                className="gap-2 text-xs rounded-xl h-9 border-border bg-card hover:bg-secondary shrink-0"
+              >
+                <Palette className="h-3.5 w-3.5 text-primary" />
+                <span>Customize Theme</span>
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-border/60 text-xs">
+              <div className="p-3 rounded-xl bg-secondary/40 border border-border/50">
+                <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
+                  Mode
+                </span>
+                <span className="font-semibold text-foreground capitalize mt-0.5 block">
+                  {theme}
+                </span>
+              </div>
+              <div className="p-3 rounded-xl bg-secondary/40 border border-border/50">
+                <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
+                  Preset
+                </span>
+                <span className="font-semibold text-foreground capitalize mt-0.5 block">
+                  {preset}
+                </span>
+              </div>
+              <div className="p-3 rounded-xl bg-secondary/40 border border-border/50">
+                <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
+                  Accent
+                </span>
+                <span className="font-semibold text-foreground capitalize mt-0.5 block">
+                  {accentColor}
+                </span>
+              </div>
+              <div className="p-3 rounded-xl bg-secondary/40 border border-border/50">
+                <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
+                  High Contrast
+                </span>
+                <span className="font-semibold text-foreground mt-0.5 block">
+                  {highContrast ? "Enabled" : "Off"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <ThemeCustomizerModal
+            open={isThemeModalOpen}
+            onOpenChange={setIsThemeModalOpen}
+          />
 
           {/* ACTION BUTTONS */}
           <div className="flex items-center justify-end gap-3 pt-2">

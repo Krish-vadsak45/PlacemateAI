@@ -1,8 +1,23 @@
+export interface PlacementNote {
+  id: string
+  title?: string
+  content: string
+  templateType?: string
+  tags?: string[]
+  history?: Array<{
+    content: string
+    editedAt: string
+  }>
+  createdAt: string
+  updatedAt?: string
+}
+
 export interface Placement {
   _id: string
   companyName: string
   jobRole: string
   status: string
+  tags?: string[]
   emailSubject?: string
   emailFrom?: string
   emailBody?: string
@@ -13,7 +28,7 @@ export interface Placement {
   assessmentDate?: string
   interviewDate?: string
   applicationLink?: string
-  notes?: Array<{ id: string; content: string; createdAt: string }>
+  notes?: PlacementNote[]
   attachments?: Array<{ id: string; name: string; url: string; type: string }>
   applicationHistory?: Array<{ status: string; changedAt: string; note?: string }>
   calendarEventId?: string

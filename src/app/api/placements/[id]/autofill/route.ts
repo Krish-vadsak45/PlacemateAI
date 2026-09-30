@@ -32,8 +32,7 @@ export async function POST(
 
     const autoFillService = createAutoFillService()
     const script = await autoFillService.generateAutoFillScript(
-      await autoFillService.getUserProfile(session.user.id),
-      applicationUrl
+      await autoFillService.getUserProfile(session.user.id)
     )
 
     return NextResponse.json({ 

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, User, LogOut, LogIn, Briefcase } from "lucide-react"
+import { LayoutDashboard, User, LogOut, LogIn, Briefcase, BarChart3 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { signOut, useSession } from "next-auth/react"
 
@@ -17,6 +17,7 @@ export default function Navbar() {
   }
 
   const isDashboardActive = pathname?.startsWith("/dashboard") || pathname?.startsWith("/placements")
+  const isAnalyticsActive = pathname?.startsWith("/analytics")
   const isProfileActive = pathname === "/profile"
 
   return (
@@ -58,6 +59,20 @@ export default function Navbar() {
                 >
                   <LayoutDashboard className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">Dashboard</span>
+                </Button>
+              </Link>
+              <Link href="/analytics">
+                <Button
+                  variant={isAnalyticsActive ? "default" : "ghost"}
+                  size="sm"
+                  className={`h-8 gap-1.5 text-xs font-medium rounded-lg transition-all ${
+                    isAnalyticsActive
+                      ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <BarChart3 className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Analytics</span>
                 </Button>
               </Link>
               <Link href="/profile">

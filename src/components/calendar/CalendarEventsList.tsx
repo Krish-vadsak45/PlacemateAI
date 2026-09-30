@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Calendar, Clock, Edit, Trash2, AlertTriangle, CheckCircle2, XCircle, RefreshCw } from "lucide-react"
@@ -33,7 +33,7 @@ export default function CalendarEventsList({ placementId, onEventUpdated }: Cale
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       setIsLoading(true)
       const response = await fetch(`/api/placements/${placementId}/calendar`)
@@ -50,7 +50,7 @@ export default function CalendarEventsList({ placementId, onEventUpdated }: Cale
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [placementId])
 
   useEffect(() => {
     fetchEvents()

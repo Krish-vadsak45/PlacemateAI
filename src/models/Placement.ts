@@ -25,11 +25,20 @@ export interface IPlacement extends Document {
   emailBody?: string;
   emailDate?: Date;
   detectionReason?: string;
+  tags?: string[];
   // New fields for detail page
   notes?: Array<{
     id: string;
+    title?: string;
     content: string;
+    templateType?: string;
+    tags?: string[];
+    history?: Array<{
+      content: string;
+      editedAt: Date;
+    }>;
     createdAt: Date;
+    updatedAt?: Date;
   }>;
   attachments?: Array<{
     id: string;
@@ -133,11 +142,23 @@ const PlacementSchema = new Schema<IPlacement>(
     emailBody: String,
     emailDate: Date,
     detectionReason: String,
+    tags: {
+      type: [String],
+      default: [],
+    },
     // New fields for detail page
     notes: [{
       id: { type: String, required: true },
+      title: String,
       content: { type: String, required: true },
-      createdAt: { type: Date, default: Date.now }
+      templateType: { type: String, default: 'custom' },
+      tags: { type: [String], default: [] },
+      history: [{
+        content: { type: String, required: true },
+        editedAt: { type: Date, default: Date.now },
+      }],
+      createdAt: { type: Date, default: Date.now },
+      updatedAt: Date,
     }],
     attachments: [{
       id: { type: String, required: true },
@@ -208,6 +229,10 @@ const PlacementSchema = new Schema<IPlacement>(
     strict: false // Allow fields that aren't in the schema
   }
 );
+
+PlacementSchema.index({ userId: 1, tags: 1 });
+PlacementSchema.index({ userId: 1, createdAt: -1 });
+PlacementSchema.index({ userId: 1, status: 1 });
 
 const Placement: Model<IPlacement> = mongoose.models.Placement || mongoose.model<IPlacement>('Placement', PlacementSchema);
 

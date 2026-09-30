@@ -16,10 +16,12 @@ import {
   Paperclip, 
   CalendarCheck,
   RotateCcw,
-  Check
+  Check,
+  Tag as TagIcon
 } from "lucide-react"
 import { format, addDays } from "date-fns"
 import { cn } from "@/lib/utils"
+import TagBadge from "../placement/TagBadge"
 
 interface FilterModalProps {
   open: boolean
@@ -61,6 +63,7 @@ export default function FilterModal({
   const [deadlineTo, setDeadlineTo] = useState<Date | undefined>(
     filters.deadlineTo ? new Date(filters.deadlineTo) : undefined
   )
+  const [availableTags, setAvailableTags] = useState<Array<{ tag: string; count: number }>>([])
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -68,9 +71,25 @@ export default function FilterModal({
       setLocalFilters(filters)
       setDeadlineFrom(filters.deadlineFrom ? new Date(filters.deadlineFrom) : undefined)
       setDeadlineTo(filters.deadlineTo ? new Date(filters.deadlineTo) : undefined)
+
+      fetch('/api/placements/tags')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.tags) setAvailableTags(data.tags)
+        })
+        .catch((err) => console.error("Error fetching tags in modal:", err))
     }
   }, [open, filters])
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  const handleTagToggle = (tag: string) => {
+    const currentTags = localFilters.tags || []
+    const exists = currentTags.includes(tag)
+    const newTags = exists
+      ? currentTags.filter((t: string) => t !== tag)
+      : [...currentTags, tag]
+    setLocalFilters({ ...localFilters, tags: newTags.length > 0 ? newTags : undefined })
+  }
 
   const handleStatusToggle = (status: string) => {
     const currentStatuses = localFilters.status || []
@@ -111,6 +130,7 @@ export default function FilterModal({
       deadlineTo: undefined,
       hasAttachments: undefined,
       hasCalendarEvent: undefined,
+      tags: undefined,
     }
     setLocalFilters(resetFilters)
     setDeadlineFrom(undefined)
@@ -231,6 +251,60 @@ export default function FilterModal({
               })}
             </div>
           </div>
+
+          {/* TAGS FILTER SECTION */}
+          {availableTags.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                  <TagIcon className="h-4 w-4 text-muted-foreground" />
+                  <span>Custom Placement Tags</span>
+                  {localFilters.tags?.length > 0 && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold">
+                      {localFilters.tags.length}
+                    </span>
+                  )}
+                </div>
+
+                {localFilters.tags?.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setLocalFilters({ ...localFilters, tags: undefined })}
+                    className="text-[11px] text-muted-foreground hover:text-foreground underline cursor-pointer"
+                  >
+                    Clear tags
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                {availableTags.map(({ tag, count }) => {
+                  const isSelected = (localFilters.tags || []).includes(tag)
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => handleTagToggle(tag)}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer",
+                        isSelected
+                          ? "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-950 dark:border-zinc-100 shadow-sm"
+                          : "bg-muted/40 hover:bg-muted/80 text-foreground border-border"
+                      )}
+                    >
+                      <span>#{tag}</span>
+                      <span className={cn(
+                        "text-[10px] px-1.5 py-0.5 rounded-md font-mono",
+                        isSelected ? "bg-white/20 text-white dark:bg-zinc-950/20 dark:text-zinc-950" : "bg-muted text-muted-foreground"
+                      )}>
+                        {count}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="h-px bg-border" />
 
