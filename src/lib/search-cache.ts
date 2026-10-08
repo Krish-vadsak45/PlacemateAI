@@ -92,7 +92,38 @@ export async function cacheSearch(key: string, data: any, ttl: number = 3600): P
 }
 
 /**
- * Invalidate cache for a user's searches
+ * Get cached placement by ID
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getCachedPlacement(placementId: string): Promise<any | null> {
+  try {
+    const client = getRedisClient()
+    const cached = await client.get(`placement:${placementId}`)
+    if (cached) {
+      return JSON.parse(cached)
+    }
+    return null
+  } catch (error) {
+    console.error('Error getting cached placement:', error)
+    return null
+  }
+}
+
+/**
+ * Cache single placement by ID
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function cachePlacement(placementId: string, data: any, ttl: number = 3600): Promise<void> {
+  try {
+    const client = getRedisClient()
+    await client.setEx(`placement:${placementId}`, ttl, JSON.stringify(data))
+  } catch (error) {
+    console.error('Error caching placement:', error)
+  }
+}
+
+/**
+ * Invalidate cache for a user's searches and tags
  */
 export async function invalidateUserCache(userId: string): Promise<void> {
   try {
@@ -102,6 +133,7 @@ export async function invalidateUserCache(userId: string): Promise<void> {
     for await (const key of client.scanIterator({ MATCH: pattern })) {
       await client.del(key)
     }
+    await client.del(`tags:${userId}`)
   } catch (error) {
     console.error('Error invalidating user cache:', error)
   }
@@ -110,12 +142,10 @@ export async function invalidateUserCache(userId: string): Promise<void> {
 /**
  * Invalidate cache for a specific placement
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function invalidatePlacementCache(placementId: string): Promise<void> {
   try {
-    // This is a simplified approach - in production, you might want to track which searches include a placement
-    // For now, we'll invalidate all search caches
     const client = getRedisClient()
+    await client.del(`placement:${placementId}`)
     const pattern = 'search:*'
     
     for await (const key of client.scanIterator({ MATCH: pattern })) {

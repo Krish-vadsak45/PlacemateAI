@@ -52,30 +52,30 @@ class AIExtractionService {
   }
 
   /**
-   * Extract placement details using AI with fallback chain: Gemini -> Groq -> Regex
+   * Extract placement details using AI with fallback chain: Groq -> Gemini -> Regex
    */
   async extractDetails(input: ExtractionInput): Promise<ExtractionResult> {
-    // Try Gemini first
-    if (this.geminiClient) {
-      try {
-        const result = await this.extractWithGemini(input)
-        if (this.isValidExtraction(result)) {
-          return { ...result, provider: "gemini", confidence: 0.9 }
-        }
-      } catch (error) {
-        console.error("Gemini extraction failed:", error)
-      }
-    }
-
-    // Fallback to Groq
+    // Try Groq first (preferred LLM)
     if (this.groqClient) {
       try {
         const result = await this.extractWithGroq(input)
         if (this.isValidExtraction(result)) {
-          return { ...result, provider: "groq", confidence: 0.8 }
+          return { ...result, provider: "groq", confidence: 0.9 }
         }
       } catch (error) {
-        console.error("Groq extraction failed:", error)
+        console.error("Groq extraction failed, falling back to Gemini:", error)
+      }
+    }
+
+    // Fallback to Gemini
+    if (this.geminiClient) {
+      try {
+        const result = await this.extractWithGemini(input)
+        if (this.isValidExtraction(result)) {
+          return { ...result, provider: "gemini", confidence: 0.85 }
+        }
+      } catch (error) {
+        console.error("Gemini extraction failed:", error)
       }
     }
 

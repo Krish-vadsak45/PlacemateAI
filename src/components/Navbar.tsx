@@ -3,20 +3,23 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, User, LogOut, LogIn, Briefcase, BarChart3 } from "lucide-react"
+import { LayoutDashboard, User, LogOut, LogIn, Briefcase, BarChart3, Users, Scale } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { signOut, useSession } from "next-auth/react"
+import { useComparison } from "@/context/ComparisonContext"
 
 export default function Navbar() {
   const { data: session } = useSession()
   const pathname = usePathname()
   const router = useRouter()
+  const { selectedItems } = useComparison()
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: "/" })
   }
 
-  const isDashboardActive = pathname?.startsWith("/dashboard") || pathname?.startsWith("/placements")
+  const isCompareActive = pathname?.startsWith("/placements/compare")
+  const isDashboardActive = (pathname?.startsWith("/dashboard") || pathname?.startsWith("/placements")) && !isCompareActive
   const isAnalyticsActive = pathname?.startsWith("/analytics")
   const isProfileActive = pathname === "/profile"
 
@@ -59,6 +62,25 @@ export default function Navbar() {
                 >
                   <LayoutDashboard className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">Dashboard</span>
+                </Button>
+              </Link>
+              <Link href="/placements/compare">
+                <Button
+                  variant={isCompareActive ? "default" : "ghost"}
+                  size="sm"
+                  className={`h-8 gap-1.5 text-xs font-medium rounded-lg transition-all relative ${
+                    isCompareActive
+                      ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Scale className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Compare</span>
+                  {selectedItems.length > 0 && (
+                    <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-primary text-primary-foreground">
+                      {selectedItems.length}
+                    </span>
+                  )}
                 </Button>
               </Link>
               <Link href="/analytics">

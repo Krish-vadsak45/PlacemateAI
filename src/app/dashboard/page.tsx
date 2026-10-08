@@ -4,6 +4,8 @@ import connectDB from "@/lib/mongodb"
 import Placement from "@/models/Placement"
 import PlacementList from "@/components/PlacementList"
 import GmailMonitorToggle from "@/components/GmailMonitorToggle"
+import DashboardSwitcher from "@/components/DashboardSwitcher"
+import SharingManager from "@/components/SharingManager"
 import { 
   Briefcase, 
   Sparkles, 
@@ -15,13 +17,36 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { checkSharedAccess } from "@/lib/shared-access"
 
-export default async function Dashboard() {
+interface DashboardProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export default async function Dashboard({ searchParams }: DashboardProps) {
   const session = await auth()
   
   if (!session?.user) {
     redirect("/api/auth/signin")
   }
+
+  const resolvedParams = await searchParams
+  const targetOwnerId = typeof resolvedParams.ownerId === 'string' ? resolvedParams.ownerId : undefined
+  
+  // Check shared access if viewing another user's dashboard
+  let isViewingShared = false
+  let sharedPermission: string = 'owner'
+
+  if (targetOwnerId && targetOwnerId !== session.user.id) {
+    const access = await checkSharedAccess(session.user.id, targetOwnerId, 'viewer')
+    if (!access.allowed) {
+      redirect("/dashboard")
+    }
+    isViewingShared = true
+    sharedPermission = access.permission
+  }
+
+  const effectiveUserId = targetOwnerId || session.user.id
 
   // Fetch real statistics from database
   let totalPlacements = 0
@@ -32,18 +57,17 @@ export default async function Dashboard() {
 
   try {
     await connectDB()
-    const userId = session.user.id
     const now = new Date()
 
     const [total, highMatch, deadlines, applied, selected] = await Promise.all([
-      Placement.countDocuments({ userId }),
-      Placement.countDocuments({ userId, matchScore: { $gte: 80 } }),
-      Placement.countDocuments({ userId, applicationDeadline: { $gte: now } }),
+      Placement.countDocuments({ userId: effectiveUserId }),
+      Placement.countDocuments({ userId: effectiveUserId, matchScore: { $gte: 80 } }),
+      Placement.countDocuments({ userId: effectiveUserId, applicationDeadline: { $gte: now } }),
       Placement.countDocuments({ 
-        userId, 
+        userId: effectiveUserId, 
         status: { $in: ['APPLIED', 'ASSESSMENT_SCHEDULED', 'INTERVIEW_SCHEDULED', 'SELECTED'] } 
       }),
-      Placement.countDocuments({ userId, status: 'SELECTED' }),
+      Placement.countDocuments({ userId: effectiveUserId, status: 'SELECTED' }),
     ])
 
     totalPlacements = total
@@ -64,6 +88,9 @@ export default async function Dashboard() {
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 max-w-7xl space-y-8">
+        {/* DASHBOARD SWITCHER (if user has shared dashboards) */}
+        <DashboardSwitcher />
+
         {/* TOP BAR / GREETING */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border">
           <div>
@@ -73,11 +100,14 @@ export default async function Dashboard() {
               <span>Campus Drive Session</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight font-heading mt-1">
-              Welcome back, {session.user.name?.split(" ")[0]}!
+              {isViewingShared
+                ? `Shared Dashboard`
+                : `Welcome back, ${session.user.name?.split(" ")[0]}!`}
             </h1>
           </div>
 
           <div className="flex items-center gap-2">
+            <SharingManager />
             <Link href="/analytics">
               <Button variant="outline" size="sm" className="gap-2 text-xs h-9 rounded-xl border-border bg-card">
                 <BarChart3 className="h-3.5 w-3.5 text-primary" />
@@ -93,8 +123,8 @@ export default async function Dashboard() {
           </div>
         </div>
 
-        {/* GMAIL MONITOR STRIP */}
-        <GmailMonitorToggle />
+        {/* GMAIL MONITOR STRIP - only show on own dashboard */}
+        {!isViewingShared && <GmailMonitorToggle />}
 
         {/* METRICS BENTO GRID */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
@@ -188,8 +218,8 @@ export default async function Dashboard() {
             </h2>
           </div>
 
-          {/* Placement List */}
-          <PlacementList />
+          {/* Placement List — pass ownerId for shared viewing */}
+          <PlacementList sharedOwnerId={targetOwnerId} sharedPermission={isViewingShared ? sharedPermission : undefined} />
         </div>
       </div>
     </div>

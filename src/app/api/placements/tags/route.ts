@@ -3,12 +3,23 @@ import { auth } from "@/lib/auth"
 import connectDB from "@/lib/mongodb"
 import Placement from "@/models/Placement"
 import mongoose from "mongoose"
+import { getCachedSearch, cacheSearch } from "@/lib/search-cache"
 
 export async function GET() {
   try {
     const session = await auth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const cacheKey = `tags:${session.user.id}`
+    const cachedTags = await getCachedSearch(cacheKey)
+    if (cachedTags) {
+      return NextResponse.json(cachedTags, {
+        headers: {
+          'Cache-Control': 'private, max-age=3600, stale-while-revalidate=86400'
+        }
+      })
     }
 
     await connectDB()
@@ -28,9 +39,17 @@ export async function GET() {
       count: item.count,
     }))
 
-    return NextResponse.json({
+    const payload = {
       success: true,
       tags,
+    }
+
+    await cacheSearch(cacheKey, payload, 3600)
+
+    return NextResponse.json(payload, {
+      headers: {
+        'Cache-Control': 'private, max-age=3600, stale-while-revalidate=86400'
+      }
     })
   } catch (error) {
     console.error("Error fetching tags aggregate:", error)

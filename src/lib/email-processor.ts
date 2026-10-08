@@ -1,9 +1,11 @@
 import mongoose from "mongoose"
-import { createGmailService, GmailMessage } from "./gmail-service"
+import { createGmailService, GmailMessage, GmailService } from "./gmail-service"
 import { createEmailDetectionService, EmailData } from "./email-detection"
 import { createAIExtractionService, ExtractionResult } from "./ai-extraction"
 import { createAISummaryService } from "./ai-summary"
 import { createJobMatcher } from "./job-matcher"
+import { uploadAttachmentToGridFS } from "./gridfs"
+import { attachmentParser } from "./attachment-parser"
 import connectDB from "./mongodb"
 import User from "@/models/User"
 import Placement from "@/models/Placement"
@@ -96,7 +98,7 @@ export class EmailProcessor {
 
       // If it's a placement email, save it to database
       if (detectionResult.isPlacementEmail) {
-        await this.savePlacementEmail(email, detectionResult.confidence, detectionResult.reason)
+        await this.savePlacementEmail(email, detectionResult.confidence, detectionResult.reason, gmailService)
       }
 
       return {
@@ -120,13 +122,81 @@ export class EmailProcessor {
   /**
    * Save placement email to database using upsert to handle duplicates
    */
-  private async savePlacementEmail(email: GmailMessage, confidence: number, reason: string): Promise<void> {
+  private async savePlacementEmail(
+    email: GmailMessage,
+    confidence: number,
+    reason: string,
+    gmailService: GmailService
+  ): Promise<void> {
     try {
-      // Extract details using AI with fallback chain
+      // Process email attachments if any
+      const savedAttachments: Array<{
+        id: string
+        name: string
+        url: string
+        type: string
+      }> = []
+      let combinedContent = email.body
+
+      if (email.attachments && email.attachments.length > 0) {
+        console.log(`Processing ${email.attachments.length} attachment(s) for email ${email.id}...`)
+        for (const att of email.attachments) {
+          try {
+            // Filter out tiny tracker icons (< 2KB unless document)
+            if (att.size < 2048 && !att.filename.match(/\.(pdf|docx|doc|xlsx|xls|csv|txt)$/i)) {
+              continue
+            }
+            // Skip excessively large files (> 25MB)
+            if (att.size > 25 * 1024 * 1024) {
+              console.log(`Skipping attachment ${att.filename} exceeding size limit (${att.size} bytes)`)
+              continue
+            }
+
+            console.log(`Downloading attachment: ${att.filename} (${att.mimeType}, ${att.size} bytes)`)
+            const buffer = await gmailService.getAttachment(email.id, att.attachmentId)
+
+            // 1. Upload to MongoDB GridFS
+            const gridFsId = await uploadAttachmentToGridFS(
+              buffer,
+              att.filename,
+              att.mimeType,
+              {
+                emailId: email.id,
+                userId: this.userId,
+              }
+            )
+
+            savedAttachments.push({
+              id: gridFsId,
+              name: att.filename,
+              url: `/api/placements/attachments/${gridFsId}`,
+              type: att.mimeType,
+            })
+
+            // 2. Extract text from PDF, DOCX, XLSX, etc.
+            const parsedDoc = await attachmentParser.extractText(
+              buffer,
+              att.mimeType,
+              att.filename
+            )
+
+            if (parsedDoc.text && parsedDoc.text.trim()) {
+              console.log(
+                `Extracted ${parsedDoc.text.length} chars from ${att.filename} (${parsedDoc.fileType})`
+              )
+              combinedContent += `\n\n=== ATTACHMENT [${att.filename}] CONTENT ===\n${parsedDoc.text.slice(0, 15000)}`
+            }
+          } catch (attError) {
+            console.error(`Failed to process attachment ${att.filename}:`, attError)
+          }
+        }
+      }
+
+      // Extract details using AI with fallback chain (using enriched content including attachments)
       const aiExtractionService = createAIExtractionService()
       const extractionResult: ExtractionResult = await aiExtractionService.extractDetails({
         subject: email.subject,
-        body: email.body,
+        body: combinedContent,
         from: email.from
       })
 
@@ -143,7 +213,7 @@ export class EmailProcessor {
         const aiSummaryService = createAISummaryService()
         const summaryResult = await aiSummaryService.generateSummary({
           subject: email.subject,
-          body: email.body,
+          body: combinedContent,
           from: email.from
         })
         aiSummary = summaryResult.summary
@@ -154,7 +224,7 @@ export class EmailProcessor {
       }
 
       // Build update document - only update AI-extracted fields and email content
-      // Preserve user-modified fields: status, notes, attachments, applicationHistory, calendarEventId
+      // Preserve user-modified fields: status, notes, applicationHistory, calendarEventId
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updateDoc: any = {
         $set: {
@@ -181,13 +251,20 @@ export class EmailProcessor {
           emailId: email.id,
           status: "NEW",
           notes: [],
-          attachments: [],
+          attachments: savedAttachments,
           applicationHistory: [],
           calendarEventId: null,
           reminderSettings: {
             deadlineReminder: true,
             interviewReminder: true
           },
+        }
+      }
+
+      // Merge new attachments into existing placement
+      if (savedAttachments.length > 0) {
+        updateDoc.$addToSet = {
+          attachments: { $each: savedAttachments }
         }
       }
 

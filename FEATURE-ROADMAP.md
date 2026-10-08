@@ -34,7 +34,7 @@ Based on the original `PLACEMATE-AI-IMPLEMENTATION-PLAN.md`, the following featu
   - Need: Bulk calendar event creation
   - Need: Calendar conflict detection
 
-**Note**: These features are detailed in the sections below (Features #2, #3, and #13).
+**Note**: These features are detailed in the sections below (Features #2 and #3).
 
 ---
 
@@ -110,33 +110,6 @@ These features build on existing infrastructure and provide immediate user value
 
 ---
 
-### 3. Form Auto-Fill UI Integration ❌ REMOVED
-
-**Description**: This feature has been completely removed from the codebase.
-
-**Features**:
-- One-click "Auto-Fill Form" button on placement cards
-- Preview filled form before submission
-- Manual field override capability
-- Form filling history with timestamps
-- Success/failure tracking per form
-- Support for multiple form types (Google Form, placement cell, company)
-- Form filling progress indicator
-- Error handling with retry option
-
-**Technical Implementation**:
-- Create AutoFillButton component
-- Add FormPreview modal
-- Integrate puppeteer-form-service with API routes
-- Add form filling history to Placement model
-- Implement progress tracking
-- Add error handling and retry logic
-
-**Estimated Effort**: 3-4 days
-
-**Priority**: High
-
----
 
 ### 4. Smart Notifications
 
@@ -166,38 +139,12 @@ These features build on existing infrastructure and provide immediate user value
 
 ---
 
-### 5. Bulk Actions
-
-**Description**: Enable bulk operations on multiple placements at once.
-
-**Features**:
-- Bulk status update (select multiple → change status)
-- Bulk delete placements
-- Bulk calendar event creation
-- Bulk export to CSV/PDF
-- Bulk tag assignment
-- Selection via checkboxes
-- Select all / deselect all
-- Confirmation dialogs for destructive actions
-
-**Technical Implementation**:
-- Add checkbox selection to PlacementList
-- Create BulkActionToolbar component
-- Implement bulk API endpoints
-- Add confirmation modals
-- Implement progress tracking for bulk operations
-
-**Estimated Effort**: 2-3 days
-
-**Priority**: High
-
----
 
 ## Phase 2: Analytics & Insights
 
 These features provide data-driven insights to help users make better placement decisions.
 
-### 6. Application Analytics Dashboard ✅ DONE
+### 4. Application Analytics Dashboard ✅ DONE
 
 **Description**: Create a comprehensive analytics dashboard showing placement statistics and trends.
 
@@ -227,7 +174,7 @@ These features provide data-driven insights to help users make better placement 
 
 ---
 
-### 7. Skill Gap Analysis
+### 5. Skill Gap Analysis
 
 **Description**: Visual representation of user skills vs job requirements with recommendations (part of AI Preparation Assistant from implementation plan).
 
@@ -253,11 +200,11 @@ These features provide data-driven insights to help users make better placement 
 
 **Priority**: Medium
 
-**Note**: This feature is part of the broader AI Preparation Assistant (Feature #13) but can be implemented independently.
+**Note**: This feature can be implemented independently.
 
 ---
 
-### 8. Placement Comparison Tool
+### 6. Placement Comparison Tool ✅ DONE
 
 **Description**: Side-by-side comparison of multiple placements to help users make decisions.
 
@@ -284,7 +231,7 @@ These features provide data-driven insights to help users make better placement 
 
 ---
 
-### 9. Notes & Tags System ✅ DONE
+### 7. Notes & Tags System ✅ DONE
 
 **Description**: Add custom notes and tagging system for better organization.
 
@@ -312,7 +259,7 @@ These features provide data-driven insights to help users make better placement 
 
 ---
 
-### 10. Export & Reporting
+### 8. Export & Reporting
 
 **Description**: Enable users to export placement data and generate reports.
 
@@ -344,7 +291,7 @@ These features provide data-driven insights to help users make better placement 
 
 These features provide advanced capabilities but require more development effort.
 
-### 11. Email Attachment Processing
+### 9. Email Attachment Processing ✅ DONE
 
 **Description**: Extract and process attachments from placement emails.
 
@@ -372,100 +319,33 @@ These features provide advanced capabilities but require more development effort
 
 ---
 
-### 12. Company Research Integration
+### 10. Company Research Integration ($0 Cost Architecture) ✅ DONE
 
-**Description**: Automatically fetch and display company information from external sources.
+**Description**: Automatically aggregate company background, live recruitment news, and interview preparation intelligence without paid APIs.
 
 **Features**:
-- Fetch company info from web (LinkedIn, Glassdoor)
-- Display company logo automatically
-- Show company size, industry, culture
-- Employee reviews integration
-- Salary range data
-- Company news feed
-- Similar company recommendations
+- Automatic company logo fetching (Google Favicons API & Clearbit free CDN)
+- Company background, description, and industry details from Wikipedia REST API ($0, no API key needed)
+- Live company news feed via Google News RSS ($0, real-time campus hiring & corporate news)
+- AI-synthesized interview preparation dossier via Groq (30-second elevator pitch, engineering culture, questions to ask interviewer)
+- Multi-tier MongoDB caching with automatic TTL to ensure sub-50ms loads with zero repeated external calls
+- Interactive Company Research Card on placement detail page with one-click refresh
 
 **Technical Implementation**:
-- Integrate web scraping (Puppeteer/Cheerio)
-- Add LinkedIn API integration
-- Add Glassdoor API integration
-- Create CompanyInfo component
-- Implement company logo fetching
-- Add company data caching
-- Create similar company algorithm
+- Created `CompanyResearch` Mongoose model with lowercase company indexing and 14-day caching
+- Implemented `company-research.ts` service with parallel fetchers (Wikipedia REST + Google News RSS + Groq synthesis)
+- Built streaming/cached REST API at `/api/placements/[id]/company-research`
+- Built interactive `CompanyResearchCard.tsx` component with tabbed intel, live news links, and copyable interview prompts
 
-**Estimated Effort**: 6-8 days
+**Estimated Effort**: 1-2 days
 
-**Priority**: Low
+**Priority**: Medium
 
 ---
 
-### 13. AI Preparation Assistant
 
-**Description**: Comprehensive AI-powered preparation system for placements and interviews (originally Phase 6 in implementation plan).
 
-**Features**:
-- Company-specific interview questions and preparation tips
-- Role-specific technical questions based on job requirements
-- Practice question generator using AI (Gemini/Groq)
-- Interview scheduling tracker integrated with calendar
-- Post-interview notes template with AI suggestions
-- Interview history tracking and analytics
-- Mock interview mode with timer and AI feedback
-- Skill gap analysis with learning recommendations
-- Company research integration (culture, values, recent news)
-- Preparation checklist per placement
-- AI-generated study plan for technical interviews
-- Common questions database by company/role
-
-**Technical Implementation**:
-- Create AIPrepAssistant component
-- Implement AI question generation using Gemini/Groq
-- Add interview scheduling to CalendarEvent model
-- Create interview notes template with AI suggestions
-- Implement interview analytics and performance tracking
-- Add practice mode with timer and AI feedback
-- Integrate with existing Skill Gap Analysis feature
-- Create company research integration (web scraping/API)
-- Build preparation checklist system
-- Implement study plan generator
-
-**Estimated Effort**: 7-8 days
-
-**Priority**: Low
-
-**Note**: This feature combines the original Phase 6 "AI Preparation Assistant" from the implementation plan with the "Interview Preparation" and "Skill Gap Analysis" features.
-
----
-
-### 14. Status Workflow Automation
-
-**Description**: Automate status changes based on rules and triggers.
-
-**Features**:
-- Auto-move status based on dates (e.g., NEW → EXPIRED after deadline)
-- Status change triggers (e.g., create calendar event when status changes to INTERVIEW_SCHEDULED)
-- Custom workflow rules per user
-- Status change notifications
-- Workflow history tracking
-- Rule builder UI
-- Conditional logic support
-
-**Technical Implementation**:
-- Create WorkflowRule model
-- Implement rule engine
-- Add workflow triggers in email processor
-- Create WorkflowBuilder component
-- Implement status change hooks
-- Add workflow history tracking
-
-**Estimated Effort**: 4-5 days
-
-**Priority**: Low
-
----
-
-### 15. Collaboration Features
+### 11. Collaboration Features
 
 **Description**: Enable sharing and collaboration on placements.
 
@@ -496,7 +376,7 @@ These features provide advanced capabilities but require more development effort
 
 These features are easy to implement and provide immediate value.
 
-### 16. Keyboard Shortcuts
+### 12. Keyboard Shortcuts
 
 **Description**: Add keyboard shortcuts for common actions.
 
@@ -519,30 +399,8 @@ These features are easy to implement and provide immediate value.
 
 ---
 
-### 17. Placement Templates
 
-**Description**: Save placements as templates for similar roles.
-
-**Features**:
-- Save placement as template
-- Quick duplicate placement from template
-- Pre-filled common fields
-- Template management (create, edit, delete)
-- Template sharing between users
-
-**Technical Implementation**:
-- Create PlacementTemplate model
-- Add template management UI
-- Implement duplicate from template
-- Add template sharing
-
-**Estimated Effort**: 2 days
-
-**Priority**: Medium
-
----
-
-### 18. Dark Mode Improvements ✅ DONE
+### 13. Dark Mode Improvements ✅ DONE
 
 **Description**: Enhance dark mode with more customization.
 
@@ -565,7 +423,7 @@ These features are easy to implement and provide immediate value.
 
 ---
 
-### 19. Performance Optimizations
+### 14. Performance Optimizations ✅ DONE
 
 **Description**: Improve performance for large datasets.
 
@@ -591,31 +449,6 @@ These features are easy to implement and provide immediate value.
 
 ---
 
-### 20. Mobile App
-
-**Description**: Create mobile application for on-the-go access.
-
-**Features**:
-- React Native or PWA for mobile access
-- Push notifications on mobile
-- Quick status updates on-the-go
-- Camera integration for document scanning
-- Offline mode support
-- Biometric authentication
-
-**Technical Implementation**:
-- Choose between React Native or PWA
-- Set up mobile project
-- Implement mobile UI components
-- Integrate push notifications
-- Add camera integration
-- Implement offline support with service workers
-
-**Estimated Effort**: 15-20 days
-
-**Priority**: Low
-
----
 
 ## Implementation Guidelines
 
@@ -642,7 +475,7 @@ These features are easy to implement and provide immediate value.
 
 Each feature may require schema updates:
 - Add new fields to existing models
-- Create new models (e.g., WorkflowRule, PlacementTemplate)
+- Create new models as needed
 - Add indexes for performance
 - Consider data migration for existing records
 
@@ -691,16 +524,12 @@ Track the following metrics to measure feature success:
 ## Dependencies
 
 Some features depend on others:
-- Analytics Dashboard depends on Skill Gap Analysis
-- Interview Preparation depends on Company Research
 - Collaboration depends on Notes & Tags System
-- Mobile App depends on most Phase 1 features
 
 ---
 
 ## Future Considerations
 
-- **AI Preparation Assistant**: Originally deferred, can be revisited after Phase 2
 - **Integration with LinkedIn**: Direct LinkedIn profile import
 - **Integration with Resume Builders**: Auto-generate resumes from profile
 - **Mock Interview Platform**: Video-based mock interviews

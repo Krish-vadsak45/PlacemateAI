@@ -6,6 +6,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { SessionProvider } from "@/components/session-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { initializeChangeStream } from "@/lib/change-stream";
+import { ComparisonProvider } from "@/context/ComparisonContext";
+import CompareFloatingBar from "@/components/placement/CompareFloatingBar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,12 +39,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col">
         <SessionProvider>
           <ThemeProvider defaultTheme="system" storageKey="placemate-theme">
-            <Navbar />
-            <main className="flex-1">{children}</main>
-            <Toaster />
+            <ComparisonProvider>
+              <Navbar />
+              <main className="flex-1">{children}</main>
+              <CompareFloatingBar />
+              <Toaster />
+            </ComparisonProvider>
           </ThemeProvider>
         </SessionProvider>
       </body>
     </html>
   );
 }
+

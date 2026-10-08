@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Search, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -21,6 +21,12 @@ export default function SearchInput({
 }: SearchInputProps) {
   const [localValue, setLocalValue] = useState(value)
   const debouncedValue = useDebounce(localValue, 300)
+  const onChangeRef = useRef(onChange)
+  const isInitialMount = useRef(true)
+
+  useEffect(() => {
+    onChangeRef.current = onChange
+  }, [onChange])
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -29,14 +35,20 @@ export default function SearchInput({
   /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
-    onChange(debouncedValue)
-  }, [debouncedValue, onChange])
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      return
+    }
+    if (debouncedValue !== value) {
+      onChangeRef.current(debouncedValue)
+    }
+  }, [debouncedValue, value])
 
   const handleClear = useCallback(() => {
     setLocalValue("")
-    onChange("")
+    onChangeRef.current("")
     onClear?.()
-  }, [onChange, onClear])
+  }, [onClear])
 
   return (
     <div className="relative">

@@ -1,13 +1,13 @@
 "use client"
 
 import { useState } from "react"
+import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Placement, PlacementDetailProps } from "@/types/placement"
 import { StatusBadge } from "./StatusBadge"
 import { AISummaryCard } from "./AISummaryCard"
 import { PlacementDetailsCard } from "./PlacementDetailsCard"
-import NotesEditor from "./NotesEditor"
 import TagManager from "./TagManager"
 import { EmailContentCard } from "./EmailContentCard"
 import { ApplicationHistoryCard } from "./ApplicationHistoryCard"
@@ -15,8 +15,22 @@ import { PlacementNavigation } from "./PlacementNavigation"
 import { MatchScoreCard } from "./MatchScoreCard"
 import { Button } from "@/components/ui/button"
 import { ExternalLink } from "lucide-react"
-import CalendarEventsList from "@/components/calendar/CalendarEventsList"
-import { PlacementCopilotCard } from "./PlacementCopilotCard"
+
+const NotesEditor = dynamic(() => import("./NotesEditor"), {
+  loading: () => <div className="glass-panel rounded-2xl p-6 h-48 animate-pulse bg-muted/20" />,
+})
+const CalendarEventsList = dynamic(() => import("@/components/calendar/CalendarEventsList"), {
+  loading: () => <div className="glass-panel rounded-2xl p-6 h-36 animate-pulse bg-muted/20" />,
+})
+const PlacementCopilotCard = dynamic(() => import("./PlacementCopilotCard"), {
+  loading: () => <div className="glass-panel rounded-2xl p-6 h-64 animate-pulse bg-muted/20" />,
+})
+const AttachmentsCard = dynamic(() => import("./AttachmentsCard"), {
+  loading: () => <div className="glass-panel rounded-2xl p-6 h-36 animate-pulse bg-muted/20" />,
+})
+const CompanyResearchCard = dynamic(() => import("./CompanyResearchCard"), {
+  loading: () => <div className="glass-panel rounded-2xl p-6 h-48 animate-pulse bg-muted/20" />,
+})
 
 export default function PlacementDetail({ placement: initialPlacement }: PlacementDetailProps) {
   const router = useRouter()
@@ -262,6 +276,20 @@ export default function PlacementDetail({ placement: initialPlacement }: Placeme
               />
             </div>
 
+            <AttachmentsCard
+              placement={placement}
+              onAttachmentAdded={(newAtt) => {
+                const updated = [...(placement.attachments || []), newAtt]
+                setPlacement({ ...placement, attachments: updated })
+                setEditedPlacement({ ...editedPlacement, attachments: updated })
+              }}
+              onAttachmentDeleted={(attId) => {
+                const updated = (placement.attachments || []).filter((a) => a.id !== attId)
+                setPlacement({ ...placement, attachments: updated })
+                setEditedPlacement({ ...editedPlacement, attachments: updated })
+              }}
+            />
+
             <EmailContentCard
               placement={placement}
               showEmail={showEmail}
@@ -289,6 +317,8 @@ export default function PlacementDetail({ placement: initialPlacement }: Placeme
               matchBreakdown={placement.matchBreakdown}
               missingRequiredSkills={placement.matchBreakdown ? undefined : []}
             />
+
+            <CompanyResearchCard placement={placement} />
           </div>
         </div>
       </div>

@@ -30,19 +30,7 @@ export class AISummaryService {
   }): Promise<AISummaryResult> {
     console.log('Starting AI summary generation for:', emailContent.subject)
     
-    // Try Gemini first
-    if (this.geminiClient) {
-      try {
-        console.log('Attempting Gemini summary generation...')
-        const summary = await this.generateGeminiSummary(emailContent)
-        console.log('Gemini summary generated successfully, length:', summary.length)
-        return { summary, provider: 'gemini' }
-      } catch (error) {
-        console.error('Gemini failed, falling back to Groq:', error)
-      }
-    }
-
-    // Fallback to Groq
+    // Try Groq first (preferred LLM)
     if (this.groqClient) {
       try {
         console.log('Attempting Groq summary generation...')
@@ -50,7 +38,19 @@ export class AISummaryService {
         console.log('Groq summary generated successfully, length:', summary.length)
         return { summary, provider: 'groq' }
       } catch (error) {
-        console.error('Groq failed:', error)
+        console.error('Groq failed, falling back to Gemini:', error)
+      }
+    }
+
+    // Fallback to Gemini
+    if (this.geminiClient) {
+      try {
+        console.log('Attempting Gemini summary generation...')
+        const summary = await this.generateGeminiSummary(emailContent)
+        console.log('Gemini summary generated successfully, length:', summary.length)
+        return { summary, provider: 'gemini' }
+      } catch (error) {
+        console.error('Gemini failed:', error)
       }
     }
 

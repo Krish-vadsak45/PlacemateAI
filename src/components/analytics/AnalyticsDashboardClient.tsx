@@ -1,18 +1,32 @@
 "use client"
 
 import React, { useState, useEffect, useCallback } from "react"
+import dynamic from "next/dynamic"
 import { DashboardAnalyticsData } from "@/lib/analytics-service"
 import AnalyticsHeader from "./AnalyticsHeader"
 import AnalyticsKPICards from "./AnalyticsKPICards"
-import ApplicationFunnelChart from "./ApplicationFunnelChart"
-import StatusDistributionChart from "./StatusDistributionChart"
-import PlacementTrendChart from "./PlacementTrendChart"
-import SkillCoverageRadar from "./SkillCoverageRadar"
-import CgpaCorrelationChart from "./CgpaCorrelationChart"
-import CompanyPerformanceTable from "./CompanyPerformanceTable"
 import { Sparkles, AlertCircle, Briefcase } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+
+const ApplicationFunnelChart = dynamic(() => import("./ApplicationFunnelChart"), {
+  loading: () => <div className="glass-panel rounded-2xl p-6 h-72 animate-pulse bg-muted/20" />,
+})
+const StatusDistributionChart = dynamic(() => import("./StatusDistributionChart"), {
+  loading: () => <div className="glass-panel rounded-2xl p-6 h-72 animate-pulse bg-muted/20" />,
+})
+const PlacementTrendChart = dynamic(() => import("./PlacementTrendChart"), {
+  loading: () => <div className="glass-panel rounded-2xl p-6 h-72 animate-pulse bg-muted/20" />,
+})
+const SkillCoverageRadar = dynamic(() => import("./SkillCoverageRadar"), {
+  loading: () => <div className="glass-panel rounded-2xl p-6 h-72 animate-pulse bg-muted/20" />,
+})
+const CgpaCorrelationChart = dynamic(() => import("./CgpaCorrelationChart"), {
+  loading: () => <div className="glass-panel rounded-2xl p-6 h-72 animate-pulse bg-muted/20" />,
+})
+const CompanyPerformanceTable = dynamic(() => import("./CompanyPerformanceTable"), {
+  loading: () => <div className="glass-panel rounded-2xl p-6 h-72 animate-pulse bg-muted/20" />,
+})
 
 interface Props {
   initialData?: DashboardAnalyticsData

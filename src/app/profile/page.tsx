@@ -31,7 +31,7 @@ import { useTheme } from "@/components/theme-provider"
 import ThemeCustomizerModal from "@/components/ThemeCustomizerModal"
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession()
+  const { data: session, status, update } = useSession()
   const router = useRouter()
   const { theme, preset, accentColor, highContrast } = useTheme()
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false)
@@ -155,6 +155,9 @@ export default function ProfilePage() {
       toast.success("Profile saved successfully!", {
         description: "Your match scores and Gmail filter have been updated.",
       })
+
+      // Refresh session to update isProfileComplete status
+      await update()
 
       setTimeout(() => {
         router.push("/dashboard")

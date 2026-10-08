@@ -8,11 +8,11 @@ export interface ProfileCheckResult {
 /**
  * Check if user profile is complete
  * A profile is considered complete if it has at least:
+ * - Phone
  * - College email
  * - Placement cell email
  * - College name
  * - Branch
- * - Current semester
  * - CGPA
  * - Graduation year
  * - At least one skill
@@ -28,11 +28,11 @@ export async function checkProfileCompletion(userId: string): Promise<ProfileChe
     const missingFields: string[] = []
 
     // Check required fields
+    if (!user.profile?.phone) missingFields.push("Phone")
     if (!user.profile?.collegeEmail) missingFields.push("College Email")
     if (!user.profile?.placementCellEmail) missingFields.push("Placement Cell Email")
     if (!user.profile?.college) missingFields.push("College")
     if (!user.profile?.branch) missingFields.push("Branch")
-    if (!user.profile?.semester) missingFields.push("Semester")
     if (!user.profile?.cgpa) missingFields.push("CGPA")
     if (!user.profile?.graduationYear) missingFields.push("Graduation Year")
     if (!user.profile?.skills || user.profile.skills.length === 0) missingFields.push("Skills")

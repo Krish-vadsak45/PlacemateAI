@@ -7,7 +7,7 @@ export interface IUser extends Document {
   profile: {
     phone?: string;
     college?: string;
-    collegeEmail: string;
+    collegeEmail?: string;
     branch?: string;
     semester?: number;
     year?: string; // Added for form pre-fill
@@ -20,7 +20,9 @@ export interface IUser extends Document {
     resume?: string;
     resumeUrl?: string; // Added for form pre-fill
     experience?: string; // Added for form pre-fill
-    placementCellEmail: string;
+    placementCellEmail?: string;
+    targetRole?: string;
+    preferredLocation?: string;
   };
   googleTokens: {
     accessToken?: string;
@@ -60,7 +62,6 @@ const UserSchema = new Schema<IUser>(
       college: String,
       collegeEmail: {
         type: String,
-        required: true,
         lowercase: true,
         trim: true,
       },
@@ -81,10 +82,11 @@ const UserSchema = new Schema<IUser>(
       experience: String, // Added for form pre-fill
       placementCellEmail: {
         type: String,
-        required: true,
         lowercase: true,
         trim: true,
       },
+      targetRole: String,
+      preferredLocation: String,
     },
     googleTokens: {
       accessToken: String,

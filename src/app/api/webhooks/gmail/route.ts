@@ -118,8 +118,22 @@ export async function POST(request: Request) {
                 },
               }
             )
-          } catch (refreshError) {
+          } catch (refreshError: any) {
             console.error("Failed to refresh access token:", refreshError)
+            
+            // Check if error is invalid_grant (token expired/revoked)
+            if (refreshError?.message === 'invalid_grant' || refreshError?.code === 400) {
+              console.log("Refresh token expired or revoked - disabling Gmail watch and clearing tokens")
+              
+              // Disable Gmail watch and clear invalid tokens
+              await User.findByIdAndUpdate(user._id, {
+                "googleTokens.gmailWatchEnabled": false,
+                "googleTokens.accessToken": null,
+                "googleTokens.refreshToken": null,
+              })
+              
+              console.log(`User ${emailAddress} needs to re-authenticate with Google`)
+            }
             return
           }
         }

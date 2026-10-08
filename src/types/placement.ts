@@ -63,4 +63,5 @@ export interface Placement {
 
 export interface PlacementDetailProps {
   placement: Placement
+  sharedPermission?: string
 }

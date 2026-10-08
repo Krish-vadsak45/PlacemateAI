@@ -46,23 +46,23 @@ export class PlacementCopilotService {
   ): Promise<CopilotAnalysisResult> {
     const prompt = this.buildPrompt(placement, chatHistory, userMessage)
 
-    // 1. Try Gemini
+    // 1. Try Groq first (preferred LLM)
+    if (this.groqClient) {
+      try {
+        const result = await this.callGroq(prompt)
+        if (result) return { ...result, provider: 'groq' }
+      } catch (err) {
+        console.error('PlacementCopilot Groq error, falling back to Gemini:', err)
+      }
+    }
+
+    // 2. Fallback to Gemini
     if (this.geminiClient) {
       try {
         const result = await this.callGemini(prompt)
         if (result) return { ...result, provider: 'gemini' }
       } catch (err) {
         console.error('PlacementCopilot Gemini error:', err)
-      }
-    }
-
-    // 2. Fallback to Groq
-    if (this.groqClient) {
-      try {
-        const result = await this.callGroq(prompt)
-        if (result) return { ...result, provider: 'groq' }
-      } catch (err) {
-        console.error('PlacementCopilot Groq error:', err)
       }
     }
 

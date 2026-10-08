@@ -3,6 +3,7 @@ import Google from "next-auth/providers/google"
 import connectDB from "./mongodb"
 import User, { IUser } from "@/models/User"
 import { checkProfileCompletion } from "./profile-check"
+import { linkPendingInvitations } from "./shared-access"
 
 declare module "next-auth" {
   interface Session {
@@ -65,6 +66,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               existingUser.googleTokens.refreshToken = account.refresh_token
             }
             await existingUser.save()
+          }
+
+          // Auto-link any pending sharing invitations for this user
+          const linkedUserId = existingUser?._id || (await User.findOne({ email: user.email }))?._id;
+          if (linkedUserId && user.email) {
+            linkPendingInvitations(
+              linkedUserId.toString(),
+              user.email,
+              user.name || undefined,
+              user.image || undefined
+            ).catch(err => console.error('Error linking pending invitations:', err));
           }
 
           return true

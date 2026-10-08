@@ -5,6 +5,7 @@ import SearchLog from '@/models/SearchLog'
 import Placement from '@/models/Placement'
 import connectDB from '@/lib/mongodb'
 import { generateCacheKey, getCachedSearch, cacheSearch } from '@/lib/search-cache'
+import { checkSharedAccess, resolveOwnerId } from '@/lib/shared-access'
 
 /**
  * GET /api/placements/search
@@ -17,6 +18,16 @@ export async function GET(request: Request) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // Check shared access
+    const targetOwnerId = resolveOwnerId(request)
+    const access = await checkSharedAccess(session.user.id, targetOwnerId, 'viewer')
+
+    if (!access.allowed) {
+      return NextResponse.json({ error: "You don't have access to this dashboard" }, { status: 403 })
+    }
+
+    const effectiveUserId = access.effectiveUserId
 
     const { searchParams } = new URL(request.url)
 
@@ -42,7 +53,7 @@ export async function GET(request: Request) {
     }
 
     // Check cache first
-    const cacheKey = generateCacheKey(session.user.id, filters)
+    const cacheKey = generateCacheKey(effectiveUserId, filters)
     const cachedResult = await getCachedSearch(cacheKey)
     
     if (cachedResult) {
@@ -51,18 +62,19 @@ export async function GET(request: Request) {
         success: true,
         ...cachedResult,
         cached: true,
+        sharedAccess: access.permission !== 'owner' ? { permission: access.permission } : undefined,
       })
     }
 
     // Perform search with MongoDB fallback
     let result
     try {
-      result = await searchPlacements(filters, session.user.id)
+      result = await searchPlacements(filters, effectiveUserId)
     } catch (esErr) {
       console.warn('Elasticsearch query failed, falling back to MongoDB:', esErr)
       await connectDB()
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const query: any = { userId: session.user.id }
+      const query: any = { userId: effectiveUserId }
       if (filters.status?.length) query.status = { $in: filters.status }
       if (filters.tags?.length) query.tags = { $in: filters.tags }
       if (filters.company?.length) query.companyName = { $in: filters.company }
@@ -89,6 +101,19 @@ export async function GET(request: Request) {
         if (filters.matchScoreMin !== undefined) matchQ.$gte = filters.matchScoreMin
         if (filters.matchScoreMax !== undefined) matchQ.$lte = filters.matchScoreMax
         query.matchScore = matchQ
+      }
+      if (filters.deadlineFrom || filters.deadlineTo) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const deadlineQ: any = {}
+        if (filters.deadlineFrom) deadlineQ.$gte = new Date(filters.deadlineFrom)
+        if (filters.deadlineTo) deadlineQ.$lte = new Date(filters.deadlineTo)
+        query.applicationDeadline = deadlineQ
+      }
+      if (filters.hasAttachments !== undefined) {
+        query.hasAttachments = filters.hasAttachments
+      }
+      if (filters.hasCalendarEvent !== undefined) {
+        query.hasCalendarEvent = filters.hasCalendarEvent
       }
 
       const pageNum = filters.page || 1
@@ -122,6 +147,7 @@ export async function GET(request: Request) {
       success: true,
       ...result,
       cached: false,
+      sharedAccess: access.permission !== 'owner' ? { permission: access.permission } : undefined,
     })
   } catch (error) {
     console.error('Error in search endpoint:', error)

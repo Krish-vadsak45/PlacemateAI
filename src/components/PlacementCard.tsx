@@ -1,10 +1,12 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { MapPin, ExternalLink, Clock, Sparkles } from "lucide-react"
+import { MapPin, ExternalLink, Clock, Sparkles, Scale } from "lucide-react"
 import TagBadge from "./placement/TagBadge"
+import { useComparison } from "@/context/ComparisonContext"
 
 interface PlacementCardProps {
+  id?: string
   companyName: string
   jobRole: string
   package?: string
@@ -19,6 +21,7 @@ interface PlacementCardProps {
 }
 
 export default function PlacementCard({
+  id,
   companyName,
   jobRole,
   package: salary,
@@ -31,6 +34,21 @@ export default function PlacementCard({
   onTagClick,
   onViewDetails,
 }: PlacementCardProps) {
+  const { toggleItem, isSelected } = useComparison()
+  const checked = id ? isSelected(id) : false
+
+  const handleCompareClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (id) {
+      toggleItem({
+        id,
+        companyName,
+        jobRole,
+        package: salary,
+      })
+    }
+  }
+
   const getStatusColor = (s: string) => {
     switch (s) {
       case "SELECTED":
@@ -117,16 +135,33 @@ export default function PlacementCard({
           </div>
         </div>
 
-        {applicationLink && (
-          <div onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+          {id && (
+            <Button
+              size="sm"
+              variant={checked ? "default" : "outline"}
+              onClick={handleCompareClick}
+              className={`h-8 text-xs gap-1 rounded-xl transition-all ${
+                checked
+                  ? "bg-primary text-primary-foreground font-semibold"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              }`}
+
+            >
+              <Scale className="h-3 w-3" />
+              <span className="hidden sm:inline">{checked ? "Selected" : "Compare"}</span>
+            </Button>
+          )}
+          {applicationLink && (
             <a href={applicationLink} target="_blank" rel="noopener noreferrer">
               <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5 rounded-xl border-border">
                 Apply <ExternalLink className="h-3 w-3" />
               </Button>
             </a>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )
 }
+
