@@ -4,19 +4,28 @@ import { signIn } from "next-auth/react"
 
 export default function SignInPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-md space-y-8 p-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-foreground">Sign in to PlaceMate AI</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Manage your placement opportunities efficiently
+    <div className="flex min-h-screen items-center justify-center relative overflow-hidden px-4">
+      {/* 3D Mesh Glow Orbs */}
+      <div className="mesh-orb top-[-50px] left-1/2 -translate-x-1/2 w-[550px] h-[450px] bg-gradient-to-tr from-sky-500/20 via-blue-600/15 to-purple-600/20" />
+      <div className="mesh-orb bottom-[-50px] right-[-50px] w-[450px] h-[450px] bg-gradient-to-br from-emerald-500/15 via-teal-500/10 to-transparent" />
+
+      <div className="glass-3d-card w-full max-w-md p-8 sm:p-10 shadow-2xl relative preserve-3d">
+        <div className="text-center space-y-2">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 font-black text-xl shadow-lg border border-white/20 mb-2">
+            P
+          </div>
+          <h2 className="text-2xl font-extrabold tracking-tight text-foreground font-heading">
+            Sign in to PlaceMate AI
+          </h2>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Automate your placement drives, email notices, deadlines, and AI fit matching
           </p>
         </div>
         
         <div className="mt-8">
           <button
             onClick={() => signIn("google", { callbackUrl: "/auth/callback" })}
-            className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 cursor-pointer dark:bg-card dark:border-border dark:text-foreground dark:hover:bg-muted"
+            className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/20 bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 px-5 py-3.5 text-xs font-bold shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">
               <path
@@ -36,9 +45,13 @@ export default function SignInPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Continue with Google
+            Continue with Google Account
           </button>
         </div>
+
+        <p className="text-[11px] text-center text-muted-foreground mt-6">
+          By signing in, you grant secure Gmail &amp; Google Calendar read/sync access.
+        </p>
       </div>
     </div>
   )

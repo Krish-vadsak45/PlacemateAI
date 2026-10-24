@@ -109,7 +109,7 @@ export default function GmailMonitorToggle() {
   }
 
   return (
-    <div className="glass-panel rounded-2xl p-4 sm:p-5 border border-border shadow-sm transition-all">
+    <div className="glass-3d-panel p-4 sm:p-5 shadow-xl transition-all">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Left side info */}
         <div className="flex items-start sm:items-center gap-3.5">

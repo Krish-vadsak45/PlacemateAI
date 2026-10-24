@@ -3,16 +3,18 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, User, LogOut, LogIn, Briefcase, BarChart3, Users, Scale } from "lucide-react"
+import { LayoutDashboard, User, LogOut, LogIn, Briefcase, BarChart3, Users, Scale, Keyboard } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { signOut, useSession } from "next-auth/react"
 import { useComparison } from "@/context/ComparisonContext"
+import { useKeyboardShortcutsContext } from "@/components/KeyboardShortcutsProvider"
 
 export default function Navbar() {
   const { data: session } = useSession()
   const pathname = usePathname()
   const router = useRouter()
   const { selectedItems } = useComparison()
+  const { openHelpModal } = useKeyboardShortcutsContext()
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: "/" })
@@ -24,11 +26,11 @@ export default function Navbar() {
   const isProfileActive = pathname === "/profile"
 
   return (
-    <header className="sticky top-0 z-50 w-full glass-nav transition-colors">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-2 z-50 w-full max-w-7xl mx-auto px-3 sm:px-6 transition-all">
+      <div className="glass-3d-panel flex h-14 items-center justify-between px-4 sm:px-6">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold transition-transform group-hover:scale-105">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold shadow-md border border-white/20 transition-transform group-hover:scale-105">
             <Briefcase className="h-4 w-4" />
           </div>
           <div className="flex flex-col">
@@ -36,11 +38,8 @@ export default function Navbar() {
               <span className="text-base font-bold tracking-tight text-foreground font-heading">
                 PlaceMate
               </span>
-              <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold tracking-wide bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
-                AI
-              </span>
             </div>
-            <span className="text-[11px] text-muted-foreground font-medium hidden sm:inline-block -mt-0.5">
+            <span className="text-[10px] text-muted-foreground font-semibold hidden sm:inline-block -mt-0.5">
               Campus Placement Co-Pilot
             </span>
           </div>
@@ -49,14 +48,14 @@ export default function Navbar() {
         {/* Navigation & Controls */}
         <div className="flex items-center gap-2 sm:gap-3">
           {session?.user && (
-            <nav className="flex items-center gap-1 bg-zinc-100/70 dark:bg-zinc-900/70 p-1 rounded-xl border border-border">
+            <nav className="flex items-center gap-1 bg-secondary/60 backdrop-blur-md p-1 rounded-xl border border-white/10 shadow-inner">
               <Link href="/dashboard">
                 <Button
                   variant={isDashboardActive ? "default" : "ghost"}
                   size="sm"
-                  className={`h-8 gap-1.5 text-xs font-medium rounded-lg transition-all ${
+                  className={`h-8 gap-1.5 text-xs font-semibold rounded-lg transition-all ${
                     isDashboardActive
-                      ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm"
+                      ? "bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 shadow-md border border-white/20"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -115,7 +114,17 @@ export default function Navbar() {
           )}
 
           {/* Right Action buttons */}
-          <div className="flex items-center gap-2 pl-1 border-l border-border">
+          <div className="flex items-center gap-1.5 pl-1 border-l border-border">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={openHelpModal}
+              className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground gap-1.5 rounded-lg border border-transparent hover:border-border"
+              title="Keyboard Shortcuts (Press ?)"
+            >
+              <Keyboard className="h-3.5 w-3.5" />
+              <kbd className="hidden lg:inline-flex font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-muted border border-border text-foreground">?</kbd>
+            </Button>
             <ThemeToggle />
 
             {session?.user ? (

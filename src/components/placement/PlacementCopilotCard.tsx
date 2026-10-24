@@ -223,7 +223,7 @@ export function PlacementCopilotCard({
   }
 
   return (
-    <div className="glass-panel rounded-2xl border border-border shadow-sm flex flex-col h-[580px] overflow-hidden bg-card/60 backdrop-blur-sm">
+    <div className="glass-3d-card rounded-2xl flex flex-col h-[580px] overflow-hidden">
       {/* HEADER */}
       <div className="px-5 py-4 border-b border-border flex items-center justify-between bg-muted/20 shrink-0">
         <div className="flex items-center gap-2.5">

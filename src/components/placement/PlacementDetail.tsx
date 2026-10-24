@@ -153,12 +153,16 @@ export default function PlacementDetail({ placement: initialPlacement }: Placeme
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-6 max-w-7xl">
+    <div className="min-h-screen bg-background text-foreground pb-20 relative overflow-hidden">
+      {/* Background 3D Glass Orbs */}
+      <div className="mesh-orb bg-indigo-500/15 top-[-100px] left-[-100px] w-[450px] h-[450px] pointer-events-none" />
+      <div className="mesh-orb bg-purple-500/15 bottom-[10%] right-[-100px] w-[500px] h-[500px] pointer-events-none" style={{ animationDelay: '-3s' }} />
+
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-6 max-w-7xl relative z-10 preserve-3d">
         <PlacementNavigation onBack={handleBack} />
 
         {/* HEADER HERO CARD */}
-        <div className="glass-panel rounded-2xl p-6 sm:p-7 border border-border shadow-sm mb-6 relative overflow-hidden">
+        <div className="glass-3d-card rounded-2xl p-6 sm:p-7 mb-6 relative overflow-hidden">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
             {/* Left: Avatar + Title */}
             <div className="flex items-start gap-4 flex-1 min-w-0">

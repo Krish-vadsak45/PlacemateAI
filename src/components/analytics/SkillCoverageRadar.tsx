@@ -54,7 +54,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 export default function SkillCoverageRadar({ data }: Props) {
   if (!data || data.length === 0) {
     return (
-      <div className="glass-panel p-6 rounded-2xl border border-border h-full flex flex-col justify-center items-center text-center py-12">
+      <div className="glass-3d-card p-6 rounded-2xl h-full flex flex-col justify-center items-center text-center py-12">
         <div className="p-3 rounded-2xl bg-secondary mb-3 text-muted-foreground">
           <Award className="h-6 w-6" />
         </div>
@@ -70,7 +70,7 @@ export default function SkillCoverageRadar({ data }: Props) {
   const matchedSkills = data.filter((s) => s.userHas)
 
   return (
-    <div className="glass-panel p-6 rounded-2xl border border-border h-full flex flex-col justify-between">
+    <div className="glass-3d-card p-6 rounded-2xl h-full flex flex-col justify-between">
       <div className="flex items-center justify-between mb-2">
         <div>
           <h2 className="text-base font-semibold text-foreground tracking-tight font-heading">

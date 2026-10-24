@@ -106,7 +106,7 @@ export function AISummaryCard({ aiSummary, isLoadingSummary, onGenerateSummary }
   }
 
   return (
-    <div className="glass-panel rounded-2xl p-6 border border-border shadow-sm space-y-4">
+    <div className="glass-3d-card p-6 border border-border/80 shadow-2xl space-y-4">
       <div className="flex items-center justify-between pb-3 border-b border-border">
         <div className="flex items-center gap-2.5">
           <div className="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-foreground flex items-center justify-center">

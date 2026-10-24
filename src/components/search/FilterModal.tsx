@@ -161,7 +161,7 @@ export default function FilterModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="w-[95vw] sm:max-w-2xl max-h-[88vh] p-0 gap-0 overflow-hidden flex flex-col rounded-2xl bg-card border border-border shadow-2xl"
+        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[95vw] sm:max-w-2xl max-h-[88vh] p-0 gap-0 overflow-hidden flex flex-col glass-3d-card shadow-2xl"
       >
         {/* MODAL HEADER */}
         <DialogHeader className="px-6 py-4 border-b border-border flex flex-row items-center justify-between gap-3 bg-muted/20">

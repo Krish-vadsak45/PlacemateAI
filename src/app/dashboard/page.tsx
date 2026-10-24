@@ -127,85 +127,93 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
         {!isViewingShared && <GmailMonitorToggle />}
 
         {/* METRICS BENTO GRID */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 perspective-1000">
           {/* Card 1: Total Opportunities */}
-          <div className="glass-panel p-5 rounded-2xl border border-border glow-card relative overflow-hidden">
+          <div className="glass-3d-card p-5 relative overflow-hidden group">
             <div className="flex items-center justify-between text-muted-foreground mb-3">
-              <span className="text-xs font-medium uppercase tracking-wider">Total Drives</span>
-              <div className="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-foreground flex items-center justify-center">
-                <Briefcase className="h-4 w-4" />
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Total Drives</span>
+              <div className="h-9 w-9 rounded-xl bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 flex items-center justify-center shadow-md border border-white/20 transition-transform group-hover:scale-110">
+                <Briefcase className="h-4.5 w-4.5" />
               </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-foreground font-heading">
+              <span className="text-3xl font-extrabold text-foreground font-heading tracking-tight">
                 {totalPlacements}
               </span>
-              <span className="text-[11px] text-muted-foreground font-medium">Opportunities</span>
+              <span className="text-[11px] text-muted-foreground font-medium">Captured Drives</span>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Ingested from placement emails
-            </p>
+            <div className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse shadow-[0_0_8px_#3b82f6]" />
+              <span>Parsed &amp; structured from emails</span>
+            </div>
           </div>
 
           {/* Card 2: High Match Score (80%+) */}
-          <div className="glass-panel p-5 rounded-2xl border border-border glow-card relative overflow-hidden">
+          <div className="glass-3d-card p-5 relative overflow-hidden group">
             <div className="flex items-center justify-between text-muted-foreground mb-3">
-              <span className="text-xs font-medium uppercase tracking-wider">Top Matches</span>
-              <div className="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-foreground flex items-center justify-center">
-                <Sparkles className="h-4 w-4" />
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Top AI Matches</span>
+              <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shadow-md transition-transform group-hover:scale-110 border border-emerald-500/30">
+                <Sparkles className="h-4.5 w-4.5" />
               </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-foreground font-heading">
+              <span className="text-3xl font-extrabold text-foreground font-heading tracking-tight">
                 {highMatchCount}
               </span>
-              <span className="text-[11px] text-muted-foreground font-medium">≥ 80% Fit</span>
+              <span className="text-[11px] text-emerald-500 font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30">
+                ≥ 80% Fit
+              </span>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Matched against your profile
-            </p>
+            <div className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
+              <span>High eligibility match score</span>
+            </div>
           </div>
 
           {/* Card 3: Active Deadlines */}
-          <div className="glass-panel p-5 rounded-2xl border border-border glow-card relative overflow-hidden">
+          <div className="glass-3d-card p-5 relative overflow-hidden group">
             <div className="flex items-center justify-between text-muted-foreground mb-3">
-              <span className="text-xs font-medium uppercase tracking-wider">Upcoming Deadlines</span>
-              <div className="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-foreground flex items-center justify-center">
-                <Clock className="h-4 w-4" />
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Active Windows</span>
+              <div className="h-9 w-9 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shadow-md transition-transform group-hover:scale-110 border border-amber-500/30">
+                <Clock className="h-4.5 w-4.5" />
               </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-foreground font-heading">
+              <span className="text-3xl font-extrabold text-foreground font-heading tracking-tight">
                 {activeDeadlines}
               </span>
-              <span className="text-[11px] text-muted-foreground font-medium">Open Drives</span>
+              <span className="text-[11px] text-amber-500 font-medium">Open Registration</span>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Registration windows active
-            </p>
+            <div className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-ping" />
+              <span>Google Calendar deadlines synced</span>
+            </div>
           </div>
 
-          {/* Card 4: In Progress */}
-          <div className="glass-panel p-5 rounded-2xl border border-border glow-card relative overflow-hidden">
+          {/* Card 4: In Progress & Selected */}
+          <div className="glass-3d-card p-5 relative overflow-hidden group">
             <div className="flex items-center justify-between text-muted-foreground mb-3">
-              <span className="text-xs font-medium uppercase tracking-wider">In Progress</span>
-              <div className="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-foreground flex items-center justify-center">
-                <TrendingUp className="h-4 w-4" />
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Active Pipeline</span>
+              <div className="h-9 w-9 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center shadow-md transition-transform group-hover:scale-110 border border-purple-500/30">
+                <TrendingUp className="h-4.5 w-4.5" />
               </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-foreground font-heading">
+              <span className="text-3xl font-extrabold text-foreground font-heading tracking-tight">
                 {appliedCount}
               </span>
-              {selectedCount > 0 && (
-                <span className="text-xs px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-foreground font-medium border border-border">
-                  {selectedCount} Selected
+              {selectedCount > 0 ? (
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">
+                  🎉 {selectedCount} Selected
                 </span>
+              ) : (
+                <span className="text-[11px] text-muted-foreground font-medium">Applied / Testing</span>
               )}
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Applied, test, or interview stages
-            </p>
+            <div className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_#a855f7]" />
+              <span>Application &amp; Interview tracking</span>
+            </div>
           </div>
         </div>
 

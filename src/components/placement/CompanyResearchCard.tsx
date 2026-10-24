@@ -106,7 +106,7 @@ export function CompanyResearchCard({ placement }: CompanyResearchCardProps) {
   }
 
   return (
-    <div className="glass-panel rounded-2xl p-6 border border-border shadow-sm space-y-6 bg-card/60 backdrop-blur-sm">
+    <div className="glass-3d-card p-6 border border-border/80 shadow-2xl space-y-6">
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
         <div className="flex items-center gap-3.5">

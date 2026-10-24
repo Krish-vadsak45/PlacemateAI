@@ -58,7 +58,7 @@ export default function AiComparisonCard({ placementIds }: AIComparisonProps) {
   };
 
   return (
-    <div className="glass-panel p-6 rounded-2xl border border-primary/20 bg-card my-8 shadow-xl">
+    <div className="glass-3d-card p-6 rounded-2xl my-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/20">

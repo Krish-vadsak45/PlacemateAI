@@ -81,7 +81,7 @@ export class CompanyResearchService {
     const record = await CompanyResearch.findOneAndUpdate(
       { companyKey },
       { $set: updateData },
-      { upsert: true, new: true, runValidators: true }
+      { upsert: true, returnDocument: "after", runValidators: true }
     )
 
     return record

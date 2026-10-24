@@ -111,7 +111,7 @@ export default function BulkCalendarCreation({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="glass-3d-card max-w-2xl max-h-[85vh] overflow-hidden flex flex-col border-0">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />

@@ -15,14 +15,22 @@ export function getRedisClient() {
       socket: {
         host: redisHost,
         port: parseInt(redisPort.toString()),
+        reconnectStrategy: (retries) => {
+          if (retries > 3) {
+            return false // Stop retrying after 3 attempts if Redis isn't running
+          }
+          return Math.min(retries * 500, 2000)
+        }
       },
       password: redisPassword || undefined,
     })
 
-    redisClient.on('error', (err) => console.error('Redis Client Error:', err))
+    redisClient.on('error', () => {
+      // Gracefully handle offline Redis without spamming process error logs
+    })
     
-    redisClient.connect().catch(err => {
-      console.error('Failed to connect to Redis:', err)
+    redisClient.connect().catch(() => {
+      // Graceful offline fallback
     })
   }
 

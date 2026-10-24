@@ -105,7 +105,7 @@ export default function ThemeCustomizerModal({ open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg rounded-3xl p-6 bg-card border border-border shadow-2xl space-y-5">
+      <DialogContent className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 sm:max-w-lg glass-3d-card p-6 border border-border/80 shadow-2xl space-y-5">
         <DialogHeader className="pb-2 border-b border-border">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-base font-bold flex items-center gap-2 text-foreground font-heading">

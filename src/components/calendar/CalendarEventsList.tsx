@@ -139,7 +139,7 @@ export default function CalendarEventsList({ placementId, onEventUpdated }: Cale
 
   if (isLoading) {
     return (
-      <Card className="glass-panel border border-border">
+      <Card className="glass-3d-card border-0">
         <CardHeader>
           <CardTitle className="text-sm font-bold">Calendar Events</CardTitle>
         </CardHeader>
@@ -156,7 +156,7 @@ export default function CalendarEventsList({ placementId, onEventUpdated }: Cale
 
   if (events.length === 0) {
     return (
-      <Card className="glass-panel border border-border">
+      <Card className="glass-3d-card border-0">
         <CardHeader>
           <CardTitle className="text-sm font-bold">Calendar Events</CardTitle>
         </CardHeader>
@@ -173,7 +173,7 @@ export default function CalendarEventsList({ placementId, onEventUpdated }: Cale
 
   return (
     <>
-      <Card className="glass-panel border border-border">
+      <Card className="glass-3d-card border-0">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="text-sm font-bold">Calendar Events</CardTitle>
           <Button

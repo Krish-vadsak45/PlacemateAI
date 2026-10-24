@@ -165,23 +165,27 @@ function ComparisonPageContent() {
   }, [placements]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl print:p-0 print:max-w-none">
+    <div className="min-h-screen bg-background text-foreground flex flex-col relative">
+      {/* 3D Mesh Glow Orbs */}
+      <div className="mesh-orb top-[-100px] left-1/3 w-[600px] h-[450px] bg-gradient-to-tr from-sky-500/15 via-blue-600/10 to-transparent" />
+      <div className="mesh-orb top-[40%] right-[-100px] w-[500px] h-[500px] bg-gradient-to-br from-purple-500/15 via-pink-500/10 to-transparent" />
+
+      <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl print:p-0 print:max-w-none preserve-3d">
         {/* Header Bar */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 print:hidden">
           <div className="flex items-center gap-3">
             <Link href="/dashboard">
-              <Button variant="ghost" size="sm" className="rounded-xl">
+              <Button variant="ghost" size="sm" className="glass-3d-pill rounded-xl">
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Back to Dashboard
               </Button>
             </Link>
-            <div className="h-6 w-px bg-border hidden sm:block" />
+            <div className="h-6 w-px bg-border/60 hidden sm:block" />
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                <Scale className="h-4 w-4" />
+              <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shadow-md">
+                <Scale className="h-4.5 w-4.5" />
               </div>
-              <h1 className="text-xl font-bold tracking-tight">Placement Comparison Matrix</h1>
+              <h1 className="text-xl font-extrabold tracking-tight font-heading">Placement Comparison Matrix</h1>
             </div>
           </div>
 
@@ -190,9 +194,9 @@ function ComparisonPageContent() {
               variant="outline"
               size="sm"
               onClick={() => setSavedModalOpen(true)}
-              className="rounded-xl border-border text-xs font-semibold"
+              className="glass-3d-pill rounded-xl text-xs font-semibold"
             >
-              <Bookmark className="h-3.5 w-3.5 mr-1.5 text-primary" />
+              <Bookmark className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
               Saved Sets
             </Button>
 
@@ -220,18 +224,18 @@ function ComparisonPageContent() {
 
         {/* Empty State */}
         {!loading && placements.length < 2 && (
-          <div className="glass-panel p-12 text-center rounded-2xl border border-border max-w-xl mx-auto my-12 space-y-4">
-            <div className="h-16 w-16 rounded-2xl bg-muted/50 text-muted-foreground flex items-center justify-center mx-auto">
+          <div className="glass-3d-card p-12 text-center rounded-2xl max-w-xl mx-auto my-12 space-y-4">
+            <div className="h-16 w-16 rounded-2xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center mx-auto shadow-md">
               <Scale className="h-8 w-8" />
             </div>
-            <h2 className="text-lg font-bold">Select Placements to Compare</h2>
+            <h2 className="text-lg font-bold font-heading">Select Placements to Compare</h2>
             <p className="text-xs text-muted-foreground leading-relaxed">
               You need at least 2 placements selected to run side-by-side spec comparison, visual charts, and AI decision analysis.
             </p>
             <div className="pt-2 flex justify-center gap-3">
-              <Link href="/placements">
-                <Button className="bg-primary text-primary-foreground text-xs rounded-xl font-semibold px-5">
-                  Browse Placements List
+              <Link href="/dashboard">
+                <Button className="bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 text-xs rounded-xl font-bold px-6 shadow-md">
+                  Browse Placement Drives
                 </Button>
               </Link>
               <Button
@@ -259,7 +263,7 @@ function ComparisonPageContent() {
         {!loading && placements.length >= 2 && (
           <div className="space-y-8">
             {/* Spec Matrix Table */}
-            <div className="glass-panel rounded-2xl border border-border overflow-hidden bg-card shadow-xl">
+            <div className="glass-3d-card rounded-2xl border border-border/80 overflow-hidden shadow-2xl">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[700px]">
                   <thead>

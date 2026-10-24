@@ -164,7 +164,7 @@ export function AttachmentsCard({
 
   return (
     <>
-      <div className="glass-panel rounded-2xl p-6 border border-border shadow-sm space-y-4">
+      <div className="glass-3d-card rounded-2xl p-6 space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">

@@ -112,7 +112,7 @@ export default function SavedComparisonsModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in-0">
-      <div className="glass-panel w-full max-w-lg p-6 rounded-2xl border border-border shadow-2xl bg-card">
+      <div className="glass-3d-card w-full max-w-lg p-6 rounded-2xl shadow-2xl">
         <div className="flex items-center justify-between pb-4 border-b border-border">
           <div className="flex items-center gap-2">
             <Bookmark className="h-5 w-5 text-primary" />

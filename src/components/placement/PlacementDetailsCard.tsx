@@ -106,7 +106,7 @@ export function PlacementDetailsCard({
   }
 
   return (
-    <div className="glass-panel rounded-2xl p-6 border border-border shadow-sm space-y-6">
+    <div className="glass-3d-card p-6 border border-border/80 shadow-2xl space-y-6">
       {/* CARD HEADER */}
       <div className="flex items-center justify-between pb-3 border-b border-border">
         <div className="flex items-center gap-2.5">

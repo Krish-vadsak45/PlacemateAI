@@ -170,7 +170,7 @@ export default function SharingManager() {
           <Button
             variant="outline"
             size="sm"
-            className="gap-2 text-xs h-9 rounded-xl border-border bg-card relative"
+            className="glass-3d-pill gap-2 text-xs h-9 relative"
           />
         }
       >
@@ -182,7 +182,7 @@ export default function SharingManager() {
           </span>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+      <DialogContent className="glass-3d-card sm:max-w-lg max-h-[85vh] overflow-y-auto border-0">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5 text-primary" />

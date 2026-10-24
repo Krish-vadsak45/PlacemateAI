@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { initializeChangeStream } from "@/lib/change-stream";
 import { ComparisonProvider } from "@/context/ComparisonContext";
 import CompareFloatingBar from "@/components/placement/CompareFloatingBar";
+import { KeyboardShortcutsProvider } from "@/components/KeyboardShortcutsProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,10 +41,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SessionProvider>
           <ThemeProvider defaultTheme="system" storageKey="placemate-theme">
             <ComparisonProvider>
-              <Navbar />
-              <main className="flex-1">{children}</main>
-              <CompareFloatingBar />
-              <Toaster />
+              <KeyboardShortcutsProvider>
+                <Navbar />
+                <main className="flex-1">{children}</main>
+                <CompareFloatingBar />
+                <Toaster />
+              </KeyboardShortcutsProvider>
             </ComparisonProvider>
           </ThemeProvider>
         </SessionProvider>

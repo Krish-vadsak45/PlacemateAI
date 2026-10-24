@@ -7,19 +7,24 @@ const redisConfig = {
   port: parseInt(process.env.REDIS_PORT || '6379'),
   password: process.env.REDIS_PASSWORD || undefined,
   maxRetriesPerRequest: null, // Required for BullMQ Workers (blocking commands)
+  enableOfflineQueue: false,
   retryStrategy: (times: number) => {
     if (times > 3) {
-      return null
+      return null // Stop reconnecting if local Redis is down
     }
-    return Math.min(times * 200, 1000)
+    return Math.min(times * 500, 2000)
   }
 }
 
 // Create Redis connection
 export const redisConnection = new Redis(redisConfig)
 
-redisConnection.on('error', (err) => {
-  console.error('Redis connection error:', err)
+let hasLoggedError = false
+redisConnection.on('error', () => {
+  if (!hasLoggedError) {
+    console.warn('Local Redis server offline. Background email queues operating in fallback mode.')
+    hasLoggedError = true
+  }
 })
 
 redisConnection.on('connect', () => {

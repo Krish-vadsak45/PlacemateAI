@@ -29,6 +29,7 @@ import {
 import { profileSchema, type ProfileFormData } from "@/lib/validations/profile"
 import { useTheme } from "@/components/theme-provider"
 import ThemeCustomizerModal from "@/components/ThemeCustomizerModal"
+import SkillsSearchDropdown from "@/components/SkillsSearchDropdown"
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession()
@@ -44,6 +45,7 @@ export default function ProfilePage() {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isDirty },
     reset,
   } = useForm<ProfileFormData>({
@@ -189,22 +191,26 @@ export default function ProfilePage() {
     : []
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20">
-      <div className="container mx-auto px-4 sm:px-6 max-w-4xl pt-8 space-y-8">
+    <div className="min-h-screen bg-background text-foreground pb-20 relative">
+      {/* 3D Mesh Glow Orbs */}
+      <div className="mesh-orb top-[-100px] left-1/3 w-[600px] h-[450px] bg-gradient-to-tr from-purple-500/15 via-indigo-600/10 to-transparent" />
+      <div className="mesh-orb top-[40%] right-[-100px] w-[500px] h-[500px] bg-gradient-to-br from-emerald-500/15 via-teal-500/10 to-transparent" />
+
+      <div className="container mx-auto px-4 sm:px-6 max-w-4xl pt-8 space-y-8 preserve-3d">
         {/* PROFILE HEADER CARD */}
-        <div className="glass-panel rounded-2xl p-6 sm:p-7 border border-border shadow-sm">
+        <div className="glass-3d-card p-6 sm:p-7 shadow-xl">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
             <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 flex items-center justify-center font-bold text-xl">
+              <div className="h-14 w-14 rounded-2xl bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 flex items-center justify-center font-extrabold text-xl shadow-md border border-white/20">
                 {session?.user?.name?.charAt(0).toUpperCase() || "U"}
               </div>
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2">
-                  <h1 className="text-lg sm:text-xl font-bold text-foreground font-heading">
+                  <h1 className="text-lg sm:text-xl font-extrabold text-foreground font-heading">
                     {session?.user?.name || "Student Profile"}
                   </h1>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-foreground border border-border">
-                    Candidate
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                    Candidate Profile
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">{session?.user?.email}</p>
@@ -212,19 +218,19 @@ export default function ProfilePage() {
             </div>
 
             {/* Profile Strength Indicator */}
-            <div className="sm:text-right space-y-1.5 p-3 rounded-xl bg-muted/30 border border-border/70">
-              <div className="flex items-center sm:justify-end gap-1.5 text-xs font-medium text-foreground">
-                <Sparkles className="h-3 w-3 text-muted-foreground" />
+            <div className="sm:text-right space-y-1.5 p-3 rounded-xl bg-secondary/50 border border-border/80">
+              <div className="flex items-center sm:justify-end gap-1.5 text-xs font-semibold text-foreground">
+                <Sparkles className="h-3.5 w-3.5 text-amber-500" />
                 Profile Strength: {completionPercent}%
               </div>
               <div className="w-32 h-1.5 rounded-full bg-muted overflow-hidden">
                 <div 
-                  className="h-full bg-zinc-900 dark:bg-zinc-100 rounded-full transition-all duration-300"
+                  className="h-full bg-emerald-500 rounded-full transition-all duration-300 shadow-[0_0_8px_#10b981]"
                   style={{ width: `${completionPercent}%` }}
                 />
               </div>
-              <p className="text-[10px] text-muted-foreground">
-                {completionPercent >= 80 ? "Optimized for match scores" : "Complete details for better AI matching"}
+              <p className="text-[10px] text-muted-foreground font-medium">
+                {completionPercent >= 80 ? "Optimized for AI match scores" : "Complete details for better AI matching"}
               </p>
             </div>
           </div>
@@ -233,7 +239,7 @@ export default function ProfilePage() {
         {/* MAIN PROFILE FORM */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* SECTION 1: PERSONAL & CONTACT */}
-          <div className="glass-panel rounded-2xl p-6 border border-border space-y-4">
+          <div className="glass-3d-card p-6 shadow-xl space-y-4">
             <div className="flex items-center gap-2 pb-2.5 border-b border-border">
               <UserIcon className="h-4 w-4 text-muted-foreground" />
               <h2 className="text-sm font-bold text-foreground">Personal Information</h2>
@@ -360,13 +366,13 @@ export default function ProfilePage() {
           </div>
 
           {/* SECTION 3: PLACEMENT CELL GMAIL MONITORING */}
-          <div className="glass-panel rounded-2xl p-6 border border-border space-y-3">
+          <div className="glass-3d-card p-6 space-y-3 shadow-xl">
             <div className="flex items-center justify-between pb-2.5 border-b border-border">
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-muted-foreground" />
                 <h2 className="text-sm font-bold text-foreground">Placement Cell Email</h2>
               </div>
-              <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-full border border-border">
+              <span className="text-[10px] font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full border border-primary/20">
                 Required for Automation
               </span>
             </div>
@@ -392,40 +398,21 @@ export default function ProfilePage() {
           </div>
 
           {/* SECTION 4: TECHNICAL SKILLS & RESUME */}
-          <div className="glass-panel rounded-2xl p-6 border border-border space-y-3.5">
+          <div className="glass-3d-card p-6 space-y-3.5 shadow-xl">
             <div className="flex items-center gap-2 pb-2.5 border-b border-border">
               <Code className="h-4 w-4 text-muted-foreground" />
               <h2 className="text-sm font-bold text-foreground">Technical Skills &amp; Resume</h2>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="skills" className="text-xs font-semibold">Technical Skills (Comma separated) *</Label>
-              <Textarea 
-                id="skills" 
-                placeholder="Python, React, TypeScript, Node.js, SQL, Machine Learning, AWS, Docker" 
-                rows={3} 
-                className="rounded-xl text-xs resize-none" 
-                {...register("skills")} 
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Technical Skills (Search &amp; Select up to 20 skills) *</Label>
+              <SkillsSearchDropdown 
+                selectedSkills={currentSkills}
+                onChange={(skillsArray) => setValue("skills", skillsArray.join(", "), { shouldValidate: true, shouldDirty: true })}
+                maxSkills={20}
               />
-              <p className="text-[11px] text-muted-foreground">
-                These skills are matched against job requirements to calculate your profile fit score.
-              </p>
               {errors.skills && (
                 <p className="text-xs text-destructive">{errors.skills.message}</p>
-              )}
-
-              {/* Skill Preview Chips */}
-              {currentSkills.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {currentSkills.map((skill, idx) => (
-                    <span 
-                      key={idx}
-                      className="text-xs px-2.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-foreground font-medium border border-border"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
               )}
             </div>
 
@@ -447,7 +434,7 @@ export default function ProfilePage() {
           </div>
 
           {/* SECTION 5: ONLINE PROFILES */}
-          <div className="glass-panel rounded-2xl p-6 border border-border space-y-3.5">
+          <div className="glass-3d-card p-6 space-y-3.5 shadow-xl">
             <div className="flex items-center gap-2 pb-2.5 border-b border-border">
               <Globe className="h-4 w-4 text-muted-foreground" />
               <h2 className="text-sm font-bold text-foreground">Online Profiles &amp; Links</h2>
@@ -496,7 +483,7 @@ export default function ProfilePage() {
           </div>
 
           {/* APPEARANCE & THEME CUSTOMIZATION CARD */}
-          <div className="glass-panel p-6 rounded-2xl border border-border space-y-4">
+          <div className="glass-3d-card p-6 space-y-4 shadow-xl">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">

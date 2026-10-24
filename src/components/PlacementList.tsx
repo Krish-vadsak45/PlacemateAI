@@ -602,7 +602,7 @@ export default function PlacementList({ sharedOwnerId, sharedPermission }: Place
   return (
     <div className="space-y-4">
       {/* SEARCH AND FILTER TOOLBAR */}
-      <div className="glass-panel p-3.5 rounded-2xl border border-border space-y-3">
+      <div className="glass-3d-panel p-3.5 sm:p-4 border border-border/80 space-y-3 shadow-xl">
         <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
           <div className="flex-1">
             <SearchInput

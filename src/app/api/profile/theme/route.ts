@@ -53,7 +53,7 @@ export async function PATCH(request: Request) {
     const updatedUser = await User.findOneAndUpdate(
       { email: session.user.email },
       { $set: updateFields },
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     ).select("themePreferences").lean()
 
     return NextResponse.json({

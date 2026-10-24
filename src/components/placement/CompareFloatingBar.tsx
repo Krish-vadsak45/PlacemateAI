@@ -31,7 +31,7 @@ export default function CompareFloatingBar() {
         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
         className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-2xl"
       >
-        <div className="glass-panel p-3.5 sm:p-4 rounded-2xl border border-primary/20 shadow-2xl bg-background/95 backdrop-blur-xl flex items-center justify-between gap-4">
+        <div className="glass-3d-panel p-3.5 sm:p-4 shadow-2xl flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Scale className="h-5 w-5" />

@@ -82,7 +82,7 @@ export default function AnalyticsKPICards({ kpis }: Props) {
         return (
           <div
             key={idx}
-            className={`glass-panel p-4 rounded-2xl border border-border bg-gradient-to-b ${card.bgGradient} transition-all duration-200 hover:shadow-lg ${card.borderColor} flex flex-col justify-between`}
+            className={`glass-3d-card p-4 bg-gradient-to-b ${card.bgGradient} flex flex-col justify-between`}
           >
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">

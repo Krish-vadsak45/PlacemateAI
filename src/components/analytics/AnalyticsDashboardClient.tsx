@@ -117,7 +117,11 @@ export default function AnalyticsDashboardClient({ initialData }: Props) {
   const isEmpty = !data || data.kpis.totalDrives === 0
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 relative">
+      {/* 3D Mesh Glow Orbs */}
+      <div className="mesh-orb top-[-80px] left-1/4 w-[500px] h-[400px] bg-gradient-to-tr from-sky-500/15 via-blue-500/10 to-transparent" />
+      <div className="mesh-orb top-[45%] right-[-80px] w-[500px] h-[500px] bg-gradient-to-br from-emerald-500/15 via-teal-500/10 to-transparent" />
+
       {/* Top Header & Range Selection */}
       <AnalyticsHeader
         currentRange={range}
@@ -128,7 +132,7 @@ export default function AnalyticsDashboardClient({ initialData }: Props) {
       />
 
       {isEmpty ? (
-        <div className="glass-panel p-12 rounded-3xl border border-border text-center max-w-2xl mx-auto my-12 space-y-4">
+        <div className="glass-3d-card p-12 text-center max-w-2xl mx-auto my-12 space-y-4">
           <div className="p-4 rounded-2xl bg-primary/10 text-primary inline-flex">
             <Briefcase className="h-8 w-8" />
           </div>

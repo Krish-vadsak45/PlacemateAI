@@ -34,7 +34,7 @@ export function MatchScoreCard({
 }: MatchScoreCardProps) {
   if (matchScore === undefined) {
     return (
-      <div className="glass-panel rounded-2xl p-6 border border-border text-center space-y-3">
+      <div className="glass-3d-card rounded-2xl p-6 border border-border text-center space-y-3">
         <div className="h-10 w-10 rounded-xl bg-muted mx-auto flex items-center justify-center text-muted-foreground">
           <Target className="h-5 w-5" />
         </div>
@@ -85,7 +85,7 @@ export function MatchScoreCard({
   ] : []
 
   return (
-    <div className="glass-panel rounded-2xl p-6 border border-border shadow-sm space-y-5">
+    <div className="glass-3d-card rounded-2xl p-6 space-y-5">
       <div className="flex items-center justify-between pb-3 border-b border-border">
         <div className="flex items-center gap-2.5">
           <div className="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-foreground flex items-center justify-center">

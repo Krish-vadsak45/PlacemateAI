@@ -49,8 +49,8 @@ export default function QuickFilters({ onFilterSelect, activeFilter }: QuickFilt
             onClick={() => onFilterSelect(filter.id)}
             className={`gap-1.5 h-8 text-xs rounded-xl transition-all cursor-pointer ${
               isActive 
-                ? "bg-primary text-primary-foreground shadow-sm" 
-                : "border-border/80 bg-background/50 hover:bg-muted/80 text-muted-foreground hover:text-foreground"
+                ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105" 
+                : "glass-3d-pill text-muted-foreground hover:text-foreground"
             }`}
           >
             <Icon className="h-3.5 w-3.5" />

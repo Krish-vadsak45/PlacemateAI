@@ -46,7 +46,7 @@ export default function CgpaCorrelationChart({ data, userCgpa }: Props) {
 
   if (!hasData) {
     return (
-      <div className="glass-panel p-6 rounded-2xl border border-border h-full flex flex-col justify-center items-center text-center py-12">
+      <div className="glass-3d-card p-6 rounded-2xl h-full flex flex-col justify-center items-center text-center py-12">
         <div className="p-3 rounded-2xl bg-secondary mb-3 text-muted-foreground">
           <GraduationCap className="h-6 w-6" />
         </div>
@@ -59,7 +59,7 @@ export default function CgpaCorrelationChart({ data, userCgpa }: Props) {
   }
 
   return (
-    <div className="glass-panel p-6 rounded-2xl border border-border h-full flex flex-col justify-between">
+    <div className="glass-3d-card p-6 rounded-2xl h-full flex flex-col justify-between">
       <div className="flex items-center justify-between mb-2">
         <div>
           <h2 className="text-base font-semibold text-foreground tracking-tight font-heading">

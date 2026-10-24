@@ -110,7 +110,7 @@ export default function DashboardSwitcher() {
       <div className="relative inline-block">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium bg-card border border-border hover:bg-muted/50 transition-colors"
+          className="glass-3d-pill flex items-center gap-2 px-3 py-1.5 text-xs font-medium cursor-pointer"
         >
           {isViewingShared ? (
             <Users className="h-3.5 w-3.5 text-primary" />
@@ -131,7 +131,7 @@ export default function DashboardSwitcher() {
             <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
 
             {/* Dropdown */}
-            <div className="absolute left-0 top-full mt-1 z-50 w-64 rounded-xl border border-border bg-card shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="glass-3d-panel absolute left-0 top-full mt-1 z-50 w-64 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
               {/* My Dashboard */}
               <button
                 onClick={() => switchDashboard()}

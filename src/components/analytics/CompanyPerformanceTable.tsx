@@ -45,7 +45,7 @@ export default function CompanyPerformanceTable({ companies }: Props) {
   }, [companies, searchTerm])
 
   return (
-    <div className="glass-panel p-6 rounded-2xl border border-border">
+    <div className="glass-3d-card p-6 rounded-2xl">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
         <div>
           <h2 className="text-base font-semibold text-foreground tracking-tight font-heading">

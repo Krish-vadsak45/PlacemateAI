@@ -22,7 +22,7 @@ export async function PATCH(request: Request) {
         name: name || session.user.name,
         profile: profile || {},
       },
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     )
 
     if (!updatedUser) {

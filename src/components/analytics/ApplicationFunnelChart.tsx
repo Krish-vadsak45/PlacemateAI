@@ -30,7 +30,7 @@ export default function ApplicationFunnelChart({ stages }: Props) {
   const maxCount = stages.length > 0 && stages[0].count > 0 ? stages[0].count : 1
 
   return (
-    <div className="glass-panel p-6 rounded-2xl border border-border h-full flex flex-col justify-between">
+    <div className="glass-3d-card p-6 rounded-2xl h-full flex flex-col justify-between">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-base font-semibold text-foreground tracking-tight font-heading">
