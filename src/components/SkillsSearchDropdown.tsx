@@ -82,8 +82,11 @@ export default function SkillsSearchDropdown({
     const trimmedSkill = skill.trim()
     if (!trimmedSkill) return
 
-    if (selectedSkills.includes(trimmedSkill)) {
-      onChange(selectedSkills.filter((s) => s !== trimmedSkill))
+    const exists = selectedSkills.some(
+      (s) => s.trim().toLowerCase() === trimmedSkill.toLowerCase()
+    )
+    if (exists) {
+      onChange(selectedSkills.filter((s) => s.trim().toLowerCase() !== trimmedSkill.toLowerCase()))
     } else {
       if (selectedSkills.length >= maxSkills) {
         return
@@ -94,7 +97,11 @@ export default function SkillsSearchDropdown({
 
   const addCustomSkill = () => {
     const trimmed = customSkillInput.trim()
-    if (trimmed && !selectedSkills.includes(trimmed)) {
+    if (!trimmed) return
+    const exists = selectedSkills.some(
+      (s) => s.trim().toLowerCase() === trimmed.toLowerCase()
+    )
+    if (!exists) {
       if (selectedSkills.length >= maxSkills) {
         return
       }
@@ -104,7 +111,7 @@ export default function SkillsSearchDropdown({
   }
 
   const removeSkill = (skillToRemove: string) => {
-    onChange(selectedSkills.filter((s) => s !== skillToRemove))
+    onChange(selectedSkills.filter((s) => s.trim().toLowerCase() !== skillToRemove.trim().toLowerCase()))
   }
 
   return (
@@ -112,7 +119,7 @@ export default function SkillsSearchDropdown({
       {/* Search & Toggle Box */}
       <div className="relative">
         <div 
-          onClick={() => setIsOpen(true)}
+          onClick={() => setIsOpen((prev) => !prev)}
           className="min-h-[44px] w-full rounded-xl border border-border bg-card p-2 text-xs transition-all cursor-pointer hover:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 flex flex-wrap items-center gap-1.5"
         >
           {selectedSkills.length === 0 ? (
@@ -133,7 +140,7 @@ export default function SkillsSearchDropdown({
                     e.stopPropagation()
                     removeSkill(skill)
                   }}
-                  className="hover:bg-primary/20 rounded p-0.5 transition-colors"
+                  className="hover:bg-primary/20 rounded p-0.5 transition-colors cursor-pointer"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -154,7 +161,10 @@ export default function SkillsSearchDropdown({
 
         {/* Dropdown Panel */}
         {isOpen && (
-          <div className="glass-3d-panel absolute top-full left-0 right-0 mt-2 z-50 rounded-2xl p-3 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="glass-3d-panel absolute top-full left-0 right-0 mt-2 z-50 rounded-2xl p-3 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 pointer-events-auto"
+          >
             {/* Search Input Bar */}
             <div className="relative mb-2.5">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -170,7 +180,7 @@ export default function SkillsSearchDropdown({
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -188,14 +198,20 @@ export default function SkillsSearchDropdown({
             {/* Skill Catalog List */}
             <div className="max-h-60 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
               {filteredSkills.map((skill) => {
-                const isSelected = selectedSkills.includes(skill)
+                const isSelected = selectedSkills.some(
+                  (s) => s.trim().toLowerCase() === skill.toLowerCase()
+                )
                 return (
                   <button
                     key={skill}
                     type="button"
                     disabled={!isSelected && isMaxReached}
-                    onClick={() => toggleSkill(skill)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all text-left ${
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      toggleSkill(skill)
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all text-left cursor-pointer ${
                       isSelected
                         ? "bg-primary text-primary-foreground font-semibold shadow-sm"
                         : isMaxReached
@@ -226,6 +242,7 @@ export default function SkillsSearchDropdown({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault()
+                    e.stopPropagation()
                     addCustomSkill()
                   }
                 }}
@@ -236,9 +253,13 @@ export default function SkillsSearchDropdown({
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={addCustomSkill}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  addCustomSkill()
+                }}
                 disabled={!customSkillInput.trim() || isMaxReached}
-                className="h-8 text-xs gap-1 rounded-xl shrink-0"
+                className="h-8 text-xs gap-1 rounded-xl shrink-0 cursor-pointer"
               >
                 <Plus className="h-3 w-3" /> Add
               </Button>

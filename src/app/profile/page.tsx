@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -44,6 +44,7 @@ export default function ProfilePage() {
   const {
     register,
     handleSubmit,
+    control,
     watch,
     setValue,
     formState: { errors, isDirty },
@@ -140,7 +141,7 @@ export default function ProfilePage() {
             semester: data.semester,
             cgpa: data.cgpa,
             graduationYear: data.graduationYear,
-            skills: data.skills ? data.skills.split(",").map(s => s.trim()) : [],
+            skills: data.skills ? data.skills.split(",").map(s => s.trim()).filter(Boolean) : [],
             resume: data.resume || undefined,
             linkedin: data.linkedin || undefined,
             github: data.github || undefined,
@@ -185,10 +186,6 @@ export default function ProfilePage() {
       </div>
     )
   }
-
-  const currentSkills = watchedFields.skills 
-    ? watchedFields.skills.split(",").map(s => s.trim()).filter(Boolean)
-    : []
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20 relative">
@@ -398,7 +395,7 @@ export default function ProfilePage() {
           </div>
 
           {/* SECTION 4: TECHNICAL SKILLS & RESUME */}
-          <div className="glass-3d-card p-6 space-y-3.5 shadow-xl">
+          <div className="glass-3d-card p-6 space-y-3.5 shadow-xl relative z-30">
             <div className="flex items-center gap-2 pb-2.5 border-b border-border">
               <Code className="h-4 w-4 text-muted-foreground" />
               <h2 className="text-sm font-bold text-foreground">Technical Skills &amp; Resume</h2>
@@ -406,10 +403,21 @@ export default function ProfilePage() {
 
             <div className="space-y-2">
               <Label className="text-xs font-semibold">Technical Skills (Search &amp; Select up to 20 skills) *</Label>
-              <SkillsSearchDropdown 
-                selectedSkills={currentSkills}
-                onChange={(skillsArray) => setValue("skills", skillsArray.join(", "), { shouldValidate: true, shouldDirty: true })}
-                maxSkills={20}
+              <Controller
+                name="skills"
+                control={control}
+                render={({ field }) => {
+                  const skillsArray = field.value
+                    ? field.value.split(",").map((s: string) => s.trim()).filter(Boolean)
+                    : []
+                  return (
+                    <SkillsSearchDropdown 
+                      selectedSkills={skillsArray}
+                      onChange={(newSkills) => field.onChange(newSkills.join(", "))}
+                      maxSkills={20}
+                    />
+                  )
+                }}
               />
               {errors.skills && (
                 <p className="text-xs text-destructive">{errors.skills.message}</p>
@@ -434,7 +442,7 @@ export default function ProfilePage() {
           </div>
 
           {/* SECTION 5: ONLINE PROFILES */}
-          <div className="glass-3d-card p-6 space-y-3.5 shadow-xl">
+          <div className="glass-3d-card p-6 space-y-3.5 shadow-xl relative z-10">
             <div className="flex items-center gap-2 pb-2.5 border-b border-border">
               <Globe className="h-4 w-4 text-muted-foreground" />
               <h2 className="text-sm font-bold text-foreground">Online Profiles &amp; Links</h2>
@@ -483,7 +491,7 @@ export default function ProfilePage() {
           </div>
 
           {/* APPEARANCE & THEME CUSTOMIZATION CARD */}
-          <div className="glass-3d-card p-6 space-y-4 shadow-xl">
+          <div className="glass-3d-card p-6 space-y-4 shadow-xl relative z-10">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">

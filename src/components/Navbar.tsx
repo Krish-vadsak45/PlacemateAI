@@ -156,7 +156,16 @@ export default function Navbar() {
             ) : (
               <Button
                 size="sm"
-                onClick={() => router.push("/auth/signin")}
+                onClick={() => {
+                  if (pathname === "/auth/signin") {
+                    const btn = document.getElementById("google-signin-btn") as HTMLButtonElement | null
+                    if (btn) {
+                      btn.click()
+                    }
+                  } else {
+                    router.push("/auth/signin")
+                  }
+                }}
                 className="h-8 text-xs font-medium gap-1.5 bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 rounded-lg px-3 shadow-sm"
               >
                 <LogIn className="h-3.5 w-3.5" />
