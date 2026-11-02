@@ -1,15 +1,22 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Calendar, TrendingUp, Clock, CheckCircle } from "lucide-react"
+import { Calendar, TrendingUp, Clock, CheckCircle, Bookmark } from "lucide-react"
 
 interface QuickFiltersProps {
   onFilterSelect: (filter: string) => void
   activeFilter?: string
+  savedCount?: number
 }
 
-export default function QuickFilters({ onFilterSelect, activeFilter }: QuickFiltersProps) {
+export default function QuickFilters({ onFilterSelect, activeFilter, savedCount }: QuickFiltersProps) {
   const quickFilters = [
+    {
+      id: "saved",
+      label: savedCount !== undefined && savedCount > 0 ? `Saved (${savedCount})` : "Saved",
+      icon: Bookmark,
+      description: "Bookmarked dream companies",
+    },
     {
       id: "this-week",
       label: "This Week",
@@ -41,6 +48,8 @@ export default function QuickFilters({ onFilterSelect, activeFilter }: QuickFilt
       {quickFilters.map((filter) => {
         const Icon = filter.icon
         const isActive = activeFilter === filter.id
+        const isSavedTab = filter.id === "saved"
+
         return (
           <Button
             key={filter.id}
@@ -49,11 +58,11 @@ export default function QuickFilters({ onFilterSelect, activeFilter }: QuickFilt
             onClick={() => onFilterSelect(filter.id)}
             className={`gap-1.5 h-8 text-xs rounded-xl transition-all cursor-pointer ${
               isActive 
-                ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105" 
+                ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105 font-bold" 
                 : "glass-3d-pill text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Icon className="h-3.5 w-3.5" />
+            <Icon className={`h-3.5 w-3.5 ${isSavedTab && (isActive || (savedCount ?? 0) > 0) ? "fill-amber-400 text-amber-500" : ""}`} />
             <span>{filter.label}</span>
           </Button>
         )

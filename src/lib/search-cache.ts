@@ -1,40 +1,76 @@
 import { createClient } from 'redis'
 
-let redisClient: ReturnType<typeof createClient> | null = null
+type RedisClient = ReturnType<typeof createClient>
+
+declare global {
+  // eslint-disable-next-line no-var
+  var redisCacheClient: RedisClient | undefined
+  // eslint-disable-next-line no-var
+  var redisConnectPromise: Promise<RedisClient | null> | undefined
+}
 
 /**
  * Get or create Redis client singleton
  */
-export function getRedisClient() {
-  if (!redisClient) {
+export function getRedisClient(): RedisClient {
+  if (!global.redisCacheClient) {
+    const redisUrl = process.env.REDIS_URL
     const redisHost = process.env.REDIS_HOST || 'localhost'
     const redisPort = process.env.REDIS_PORT || 6379
     const redisPassword = process.env.REDIS_PASSWORD
-    
-    redisClient = createClient({
+
+    global.redisCacheClient = createClient({
+      url: redisUrl || undefined,
       socket: {
-        host: redisHost,
-        port: parseInt(redisPort.toString()),
+        host: !redisUrl ? redisHost : undefined,
+        port: !redisUrl ? parseInt(redisPort.toString()) : undefined,
         reconnectStrategy: (retries) => {
-          if (retries > 3) {
-            return false // Stop retrying after 3 attempts if Redis isn't running
-          }
-          return Math.min(retries * 500, 2000)
-        }
+          return Math.min(retries * 500, 3000)
+        },
       },
       password: redisPassword || undefined,
     })
 
-    redisClient.on('error', () => {
-      // Gracefully handle offline Redis without spamming process error logs
-    })
-    
-    redisClient.connect().catch(() => {
-      // Graceful offline fallback
+    global.redisCacheClient.on('error', () => {
+      // Gracefully handle offline Redis without crashing process
     })
   }
 
-  return redisClient
+  return global.redisCacheClient
+}
+
+/**
+ * Ensure Redis client is connected before running operations
+ */
+export async function getConnectedRedisClient(): Promise<RedisClient | null> {
+  const client = getRedisClient()
+  if (!client) return null
+
+  if (client.isOpen && client.isReady) {
+    return client
+  }
+
+  if (global.redisConnectPromise) {
+    try {
+      await global.redisConnectPromise
+      if (client.isOpen) return client
+    } catch {
+      return null
+    }
+  }
+
+  if (!client.isOpen) {
+    global.redisConnectPromise = client.connect()
+      .then(() => client)
+      .catch(() => null)
+      .finally(() => {
+        global.redisConnectPromise = undefined
+      })
+
+    return await global.redisConnectPromise
+  }
+
+  return client.isOpen ? client : null
 }
 
 /**
@@ -57,6 +93,7 @@ export function generateCacheKey(userId: string, filters: any): string {
     filters.deadlineTo || '',
     filters.hasAttachments || '',
     filters.hasCalendarEvent || '',
+    filters.saved ? `saved:${filters.savedIds?.sort().join(',') || 'empty'}` : '',
     filters.sortBy || '',
     filters.sortOrder || '',
     filters.page || '1',
@@ -72,16 +109,19 @@ export function generateCacheKey(userId: string, filters: any): string {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getCachedSearch(key: string): Promise<any | null> {
   try {
-    const client = getRedisClient()
+    const client = await getConnectedRedisClient()
+    if (!client || !client.isOpen) {
+      return null
+    }
+
     const cached = await client.get(key)
-    
     if (cached) {
       return JSON.parse(cached)
     }
     
     return null
   } catch (error) {
-    console.error('Error getting cached search:', error)
+    console.warn('Error getting cached search:', error)
     return null
   }
 }
@@ -92,10 +132,14 @@ export async function getCachedSearch(key: string): Promise<any | null> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function cacheSearch(key: string, data: any, ttl: number = 3600): Promise<void> {
   try {
-    const client = getRedisClient()
+    const client = await getConnectedRedisClient()
+    if (!client || !client.isOpen) {
+      return
+    }
+
     await client.setEx(key, ttl, JSON.stringify(data))
   } catch (error) {
-    console.error('Error caching search:', error)
+    console.warn('Error caching search:', error)
   }
 }
 
@@ -105,14 +149,18 @@ export async function cacheSearch(key: string, data: any, ttl: number = 3600): P
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getCachedPlacement(placementId: string): Promise<any | null> {
   try {
-    const client = getRedisClient()
+    const client = await getConnectedRedisClient()
+    if (!client || !client.isOpen) {
+      return null
+    }
+
     const cached = await client.get(`placement:${placementId}`)
     if (cached) {
       return JSON.parse(cached)
     }
     return null
   } catch (error) {
-    console.error('Error getting cached placement:', error)
+    console.warn('Error getting cached placement:', error)
     return null
   }
 }
@@ -123,10 +171,14 @@ export async function getCachedPlacement(placementId: string): Promise<any | nul
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function cachePlacement(placementId: string, data: any, ttl: number = 3600): Promise<void> {
   try {
-    const client = getRedisClient()
+    const client = await getConnectedRedisClient()
+    if (!client || !client.isOpen) {
+      return
+    }
+
     await client.setEx(`placement:${placementId}`, ttl, JSON.stringify(data))
   } catch (error) {
-    console.error('Error caching placement:', error)
+    console.warn('Error caching placement:', error)
   }
 }
 
@@ -135,15 +187,18 @@ export async function cachePlacement(placementId: string, data: any, ttl: number
  */
 export async function invalidateUserCache(userId: string): Promise<void> {
   try {
-    const client = getRedisClient()
+    const client = await getConnectedRedisClient()
+    if (!client || !client.isOpen) {
+      return
+    }
+
     const pattern = `search:${userId}:*`
-    
     for await (const key of client.scanIterator({ MATCH: pattern })) {
       await client.del(key)
     }
     await client.del(`tags:${userId}`)
   } catch (error) {
-    console.error('Error invalidating user cache:', error)
+    console.warn('Error invalidating user cache:', error)
   }
 }
 
@@ -152,14 +207,17 @@ export async function invalidateUserCache(userId: string): Promise<void> {
  */
 export async function invalidatePlacementCache(placementId: string): Promise<void> {
   try {
-    const client = getRedisClient()
+    const client = await getConnectedRedisClient()
+    if (!client || !client.isOpen) {
+      return
+    }
+
     await client.del(`placement:${placementId}`)
     const pattern = 'search:*'
-    
     for await (const key of client.scanIterator({ MATCH: pattern })) {
       await client.del(key)
     }
   } catch (error) {
-    console.error('Error invalidating placement cache:', error)
+    console.warn('Error invalidating placement cache:', error)
   }
 }

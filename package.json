@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "worker": "tsx scripts/start-worker.ts",
-    "worker:dev": "tsx watch scripts/start-worker.ts"
+    "worker:dev": "tsx watch scripts/start-worker.ts",
+    "clear-cache": "tsx scripts/clear-cache.ts",
+    "init-elasticsearch": "tsx scripts/init-elasticsearch.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

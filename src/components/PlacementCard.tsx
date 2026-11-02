@@ -1,9 +1,10 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { MapPin, ExternalLink, Clock, Sparkles, Scale } from "lucide-react"
+import { MapPin, ExternalLink, Clock, Sparkles, Scale, Bookmark } from "lucide-react"
 import TagBadge from "./placement/TagBadge"
 import { useComparison } from "@/context/ComparisonContext"
+import { useSavedPlacements } from "@/context/SavedPlacementsContext"
 
 interface PlacementCardProps {
   id?: string
@@ -35,7 +36,9 @@ export default function PlacementCard({
   onViewDetails,
 }: PlacementCardProps) {
   const { toggleItem, isSelected } = useComparison()
+  const { isSaved, toggleSave } = useSavedPlacements()
   const checked = id ? isSelected(id) : false
+  const saved = id ? isSaved(id) : false
 
   const handleCompareClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -142,6 +145,25 @@ export default function PlacementCard({
         </div>
 
         <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+          {id && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation()
+                toggleSave(id)
+              }}
+              className={`h-8 text-xs gap-1 rounded-xl transition-all ${
+                saved
+                  ? "bg-amber-500/15 border-amber-500/30 text-amber-600 dark:text-amber-400 font-semibold shadow-sm"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              }`}
+              title={saved ? "Remove from saved" : "Save placement"}
+            >
+              <Bookmark className={`h-3 w-3 ${saved ? "fill-amber-400 text-amber-500" : ""}`} />
+              <span className="hidden sm:inline">{saved ? "Saved" : "Save"}</span>
+            </Button>
+          )}
           {id && (
             <Button
               size="sm"

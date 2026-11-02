@@ -10,6 +10,8 @@ import {
   Filter, 
   ChevronLeft, 
   ChevronRight, 
+  ChevronsLeft,
+  ChevronsRight,
   Sparkles, 
   DollarSign, 
   MapPin, 
@@ -23,7 +25,8 @@ import {
   Paperclip,
   CalendarCheck,
   Calendar as CalendarIcon,
-  Scale
+  Scale,
+  Bookmark,
 } from "lucide-react"
 import { toast } from "sonner"
 import dynamic from "next/dynamic"
@@ -32,8 +35,13 @@ import QuickFilters from "@/components/search/QuickFilters"
 import TagBadge from "./placement/TagBadge"
 import Link from "next/link"
 import { useComparison } from "@/context/ComparisonContext"
+import { useSavedPlacements } from "@/context/SavedPlacementsContext"
 
 const FilterModal = dynamic(() => import("@/components/search/FilterModal"), {
+  ssr: false,
+})
+
+const SmartPasteModal = dynamic(() => import("@/components/placement/SmartPasteModal"), {
   ssr: false,
 })
 
@@ -71,7 +79,9 @@ const PlacementItemCard = memo(function PlacementItemCard({
   onDeletePlacement,
 }: PlacementItemCardProps) {
   const { toggleItem, isSelected } = useComparison()
+  const { isSaved, toggleSave } = useSavedPlacements()
   const checked = isSelected(placement._id)
+  const saved = isSaved(placement._id)
 
   const handleCompareToggle = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -189,6 +199,25 @@ const PlacementItemCard = memo(function PlacementItemCard({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center gap-1.5">
+            {/* Save / Bookmark Button */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation()
+                toggleSave(placement._id)
+              }}
+              className={`h-7 text-xs px-2 rounded-lg gap-1 transition-all ${
+                saved
+                  ? "bg-amber-500/15 border-amber-500/30 text-amber-600 dark:text-amber-400 font-semibold"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              }`}
+              title={saved ? "Remove from saved" : "Save placement"}
+            >
+              <Bookmark className={`h-3 w-3 ${saved ? "fill-amber-400 text-amber-500" : ""}`} />
+              <span className="hidden sm:inline">{saved ? "Saved" : "Save"}</span>
+            </Button>
+
             {/* Compare Toggle Button */}
             <Button
               size="sm"
@@ -264,6 +293,7 @@ interface PlacementListProps {
 
 export default function PlacementList({ sharedOwnerId, sharedPermission }: PlacementListProps = {}) {
   const { data: session } = useSession()
+  const { savedCount, isSaved } = useSavedPlacements()
   const searchParams = useSearchParams()
   const router = useRouter()
   const [placements, setPlacements] = useState<Placement[]>([])
@@ -274,12 +304,17 @@ export default function PlacementList({ sharedOwnerId, sharedPermission }: Place
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [aggregations, setAggregations] = useState<any>(undefined)
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
+  const [isSmartPasteOpen, setIsSmartPasteOpen] = useState(false)
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(parseInt(searchParams.get('page') || '1'))
-  const [limit] = useState(20)
+  const [limit, setLimit] = useState(10)
   const [availableTags, setAvailableTags] = useState<Array<{ tag: string; count: number }>>([])
-  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false)
-  const observerTarget = useRef<HTMLDivElement | null>(null)
+
+  const displayedPlacements = useMemo(() => {
+    if (!filters.saved) return placements
+    return placements.filter((p) => isSaved(p._id))
+  }, [placements, filters.saved, isSaved])
+  const listTopRef = useRef<HTMLDivElement | null>(null)
   const isUpdatingUrl = useRef(false)
 
   // Fetch available tags
@@ -308,6 +343,7 @@ export default function PlacementList({ sharedOwnerId, sharedPermission }: Place
     if (searchParams.get('deadlineTo')) urlFilters.deadlineTo = searchParams.get('deadlineTo')
     if (searchParams.get('hasAttachments')) urlFilters.hasAttachments = searchParams.get('hasAttachments') === 'true'
     if (searchParams.get('hasCalendarEvent')) urlFilters.hasCalendarEvent = searchParams.get('hasCalendarEvent') === 'true'
+    if (searchParams.get('saved') === 'true') urlFilters.saved = true
     
     setFilters((prev: any) => {
       if (JSON.stringify(prev) === JSON.stringify(urlFilters)) return prev
@@ -329,6 +365,7 @@ export default function PlacementList({ sharedOwnerId, sharedPermission }: Place
     if (filters.deadlineTo) params.set('deadlineTo', filters.deadlineTo)
     if (filters.hasAttachments !== undefined) params.set('hasAttachments', filters.hasAttachments.toString())
     if (filters.hasCalendarEvent !== undefined) params.set('hasCalendarEvent', filters.hasCalendarEvent.toString())
+    if (filters.saved) params.set('saved', 'true')
     if (page > 1) params.set('page', page.toString())
 
     const queryString = params.toString()
@@ -358,11 +395,7 @@ export default function PlacementList({ sharedOwnerId, sharedPermission }: Place
 
   const fetchPlacements = useCallback(async () => {
     try {
-      if (page > 1) {
-        setIsFetchingNextPage(true)
-      } else {
-        setIsLoading(true)
-      }
+      setIsLoading(true)
       const params = new URLSearchParams()
       if (searchQuery) params.set('q', searchQuery)
       if (filters.status?.length) params.set('status', filters.status.join(','))
@@ -375,6 +408,7 @@ export default function PlacementList({ sharedOwnerId, sharedPermission }: Place
       if (filters.deadlineTo) params.set('deadlineTo', filters.deadlineTo)
       if (filters.hasAttachments !== undefined) params.set('hasAttachments', filters.hasAttachments.toString())
       if (filters.hasCalendarEvent !== undefined) params.set('hasCalendarEvent', filters.hasCalendarEvent.toString())
+      if (filters.saved) params.set('saved', 'true')
       params.set('page', page.toString())
       params.set('limit', limit.toString())
       if (sharedOwnerId) params.set('ownerId', sharedOwnerId)
@@ -383,16 +417,7 @@ export default function PlacementList({ sharedOwnerId, sharedPermission }: Place
       const data = await response.json()
       
       if (response.ok) {
-        const newItems = data.placements || []
-        if (page > 1) {
-          setPlacements(prev => {
-            const existingIds = new Set(prev.map(p => p._id))
-            const filtered = newItems.filter((p: Placement) => !existingIds.has(p._id))
-            return [...prev, ...filtered]
-          })
-        } else {
-          setPlacements(newItems)
-        }
+        setPlacements(data.placements || [])
         setTotal(data.total || 0)
         if (data.aggregations) setAggregations(data.aggregations)
       } else {
@@ -403,7 +428,6 @@ export default function PlacementList({ sharedOwnerId, sharedPermission }: Place
       toast.error("Failed to fetch placements")
     } finally {
       setIsLoading(false)
-      setIsFetchingNextPage(false)
     }
   }, [searchQuery, filters, page, limit, sharedOwnerId])
 
@@ -416,28 +440,43 @@ export default function PlacementList({ sharedOwnerId, sharedPermission }: Place
   }, [userId, fetchPlacements])
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Infinite Scroll IntersectionObserver trigger
-  const totalPages = useMemo(() => Math.ceil(total / limit), [total, limit])
-  useEffect(() => {
-    const target = observerTarget.current
-    if (!target || isLoading || isFetchingNextPage || page >= totalPages) return
+  // Page calculations and pagination range builder
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(total / limit)), [total, limit])
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && page < totalPages && !isFetchingNextPage && !isLoading) {
-          setPage((prev) => prev + 1)
-        }
-      },
-      { threshold: 0.1 }
-    )
+  const getPaginationNumbers = useCallback(() => {
+    const delta = 1
+    const range: (number | string)[] = []
+    const left = Math.max(2, page - delta)
+    const right = Math.min(totalPages - 1, page + delta)
 
-    observer.observe(target)
-    return () => {
-      if (target) observer.unobserve(target)
+    range.push(1)
+
+    if (left > 2) {
+      range.push("...")
     }
-  }, [isLoading, isFetchingNextPage, page, totalPages])
+
+    for (let i = left; i <= right; i++) {
+      range.push(i)
+    }
+
+    if (right < totalPages - 1) {
+      range.push("...")
+    }
+
+    if (totalPages > 1) {
+      range.push(totalPages)
+    }
+
+    return range
+  }, [page, totalPages])
+
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage)
+    listTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
 
   const getActiveQuickFilter = useCallback(() => {
+    if (filters.saved) return 'saved'
     if (filters.matchScoreMin === 80) return 'high-match'
     if (filters.status?.length === 3 && filters.status.includes('APPLIED') && filters.status.includes('ASSESSMENT_SCHEDULED') && filters.status.includes('INTERVIEW_SCHEDULED')) return 'applied'
     if (filters.deadlineFrom && filters.deadlineTo) {
@@ -450,6 +489,7 @@ export default function PlacementList({ sharedOwnerId, sharedPermission }: Place
   }, [filters])
 
   const handleQuickFilter = useCallback((filterId: string) => {
+    setPage(1)
     const now = new Date()
     const tomorrow = new Date(now)
     tomorrow.setDate(tomorrow.getDate() + 7)
@@ -458,6 +498,17 @@ export default function PlacementList({ sharedOwnerId, sharedPermission }: Place
     const activeQF = getActiveQuickFilter()
 
     switch (filterId) {
+      case 'saved':
+        if (filters.saved) {
+          setFilters((prev: any) => {
+            const next = { ...prev }
+            delete next.saved
+            return next
+          })
+        } else {
+          setFilters((prev: any) => ({ ...prev, saved: true }))
+        }
+        break
       case 'this-week':
         if (activeQF === 'this-week') {
           setFilters((prev: any) => {
@@ -613,6 +664,19 @@ export default function PlacementList({ sharedOwnerId, sharedPermission }: Place
           </div>
           <div className="flex items-center gap-2">
             <Button
+              onClick={() => setIsSmartPasteOpen(true)}
+              data-shortcut-new="true"
+              className="gap-1.5 h-10 text-xs font-semibold rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-md transition-all cursor-pointer"
+              title="Import placement details from WhatsApp, LinkedIn, or Unstop (Ctrl + N)"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Smart Paste</span>
+              <kbd className="hidden md:inline-flex font-mono text-[9px] font-bold px-1 py-0.2 rounded bg-white/20 border border-white/30 text-white">
+                Ctrl+N
+              </kbd>
+            </Button>
+
+            <Button
               variant="outline"
               onClick={() => setIsFilterModalOpen(true)}
               className="gap-1.5 h-10 text-xs rounded-xl border-border bg-card hover:bg-muted/80 cursor-pointer"
@@ -630,7 +694,7 @@ export default function PlacementList({ sharedOwnerId, sharedPermission }: Place
 
         {/* Quick Filters */}
         <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
-          <QuickFilters onFilterSelect={handleQuickFilter} activeFilter={getActiveQuickFilter()} />
+          <QuickFilters onFilterSelect={handleQuickFilter} activeFilter={getActiveQuickFilter()} savedCount={savedCount} />
           <span className="text-xs text-muted-foreground ml-auto">
             {total} {total === 1 ? "opportunity" : "opportunities"}
           </span>
@@ -643,6 +707,22 @@ export default function PlacementList({ sharedOwnerId, sharedPermission }: Place
               <Filter className="h-3 w-3 text-muted-foreground" />
               Active Filters:
             </span>
+
+            {/* Saved Filter Chip */}
+            {filters.saved && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-semibold shadow-2xs text-xs">
+                <Bookmark className="h-3 w-3 fill-amber-400" />
+                <span>Saved Drives ({savedCount})</span>
+                <button
+                  type="button"
+                  onClick={() => removeSingleFilter("saved")}
+                  className="text-amber-600/70 hover:text-amber-600 p-0.5 rounded-md hover:bg-amber-500/20 transition-colors cursor-pointer"
+                  title="Remove saved filter"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
 
             {/* Search Query Chip */}
             {searchQuery && (
@@ -861,6 +941,9 @@ export default function PlacementList({ sharedOwnerId, sharedPermission }: Place
       </div>
 
 
+      {/* SCROLL ANCHOR FOR PAGINATION */}
+      <div ref={listTopRef} className="scroll-mt-6" />
+
       {/* SKELETON LOADING STATE */}
       {isLoading ? (
         <div className="space-y-3">
@@ -880,38 +963,50 @@ export default function PlacementList({ sharedOwnerId, sharedPermission }: Place
             </div>
           ))}
         </div>
-      ) : placements.length === 0 ? (
+      ) : displayedPlacements.length === 0 ? (
         /* EMPTY STATE */
         <div className="glass-panel rounded-2xl p-10 text-center border border-border space-y-3">
           <div className="h-12 w-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-muted-foreground mx-auto flex items-center justify-center">
-            <Briefcase className="h-5 w-5" />
+            {filters.saved ? (
+              <Bookmark className="h-5 w-5 text-amber-500 fill-amber-400/20" />
+            ) : (
+              <Briefcase className="h-5 w-5" />
+            )}
           </div>
           <div className="space-y-1 max-w-sm mx-auto">
-            <h3 className="text-sm font-bold text-foreground">No Placements Found</h3>
+            <h3 className="text-sm font-bold text-foreground">
+              {filters.saved ? "No Saved Placements" : "No Placements Found"}
+            </h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              {searchQuery || Object.keys(filters).length > 0
+              {filters.saved
+                ? "You haven't saved any placement drives yet. Click the bookmark 'Save' button on any company card to add it to your shortlist."
+                : searchQuery || Object.keys(filters).length > 0
                 ? "Try clearing filters or search terms."
                 : "Placement emails received in your Gmail inbox will appear here once processed."}
             </p>
           </div>
-          {(searchQuery || Object.keys(filters).length > 0) && (
+          {(filters.saved || searchQuery || Object.keys(filters).length > 0) && (
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
-                setSearchQuery("")
-                setFilters({})
+                if (filters.saved) {
+                  removeSingleFilter("saved")
+                } else {
+                  setSearchQuery("")
+                  setFilters({})
+                }
               }}
-              className="text-xs rounded-xl"
+              className="text-xs rounded-xl cursor-pointer"
             >
-              Reset Filters
+              {filters.saved ? "Show All Drives" : "Reset Filters"}
             </Button>
           )}
         </div>
       ) : (
         /* PLACEMENT CARDS LIST */
         <div className="space-y-3">
-          {placements.map((placement) => (
+          {displayedPlacements.map((placement) => (
             <PlacementItemCard
               key={placement._id}
               placement={placement}
@@ -924,46 +1019,130 @@ export default function PlacementList({ sharedOwnerId, sharedPermission }: Place
         </div>
       )}
 
-      {/* INFINITE SCROLL SENTINEL & LOADING INDICATOR */}
-      {page < totalPages && (
-        <div ref={observerTarget} className="py-4 text-center">
-          {isFetchingNextPage && (
-            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <span className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-              <span>Loading more placement drives...</span>
+      {/* PAGINATION CONTROLS */}
+      {total > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border/80">
+          {/* Left: Summary and Page Size */}
+          <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+            <span>
+              Showing <strong className="text-foreground">{Math.min(total, (page - 1) * limit + 1)}</strong> to{" "}
+              <strong className="text-foreground">{Math.min(total, page * limit)}</strong> of{" "}
+              <strong className="text-foreground">{total}</strong> drives
+            </span>
+
+            <div className="h-4 w-px bg-border hidden sm:block" />
+
+            <div className="flex items-center gap-1.5">
+              <span>Per page:</span>
+              <div className="flex items-center gap-1">
+                {[10, 20, 50].map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => {
+                      setLimit(size)
+                      handlePageChange(1)
+                    }}
+                    className={`h-7 px-2.5 text-xs rounded-lg font-medium transition-all cursor-pointer ${
+                      limit === size
+                        ? "bg-primary text-primary-foreground shadow-xs font-semibold"
+                        : "bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground border border-border"
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Page Navigation Buttons */}
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1.5">
+              {/* First Page */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(1)}
+                disabled={page === 1 || isLoading}
+                title="First Page"
+                className="h-8 w-8 p-0 text-xs rounded-xl cursor-pointer"
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+
+              {/* Previous Page */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(Math.max(1, page - 1))}
+                disabled={page === 1 || isLoading}
+                title="Previous Page"
+                className="h-8 px-2.5 text-xs rounded-xl gap-1 cursor-pointer"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Prev</span>
+              </Button>
+
+              {/* Numbered Page Buttons */}
+              <div className="flex items-center gap-1">
+                {getPaginationNumbers().map((item, idx) => {
+                  if (item === "...") {
+                    return (
+                      <span key={`ellipsis-${idx}`} className="px-1 text-xs text-muted-foreground select-none">
+                        ...
+                      </span>
+                    )
+                  }
+
+                  const pageNum = Number(item)
+                  const isCurrent = pageNum === page
+
+                  return (
+                    <Button
+                      key={`page-${pageNum}`}
+                      variant={isCurrent ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(pageNum)}
+                      disabled={isLoading}
+                      className={`h-8 w-8 p-0 text-xs rounded-xl font-medium cursor-pointer transition-all ${
+                        isCurrent
+                          ? "bg-primary text-primary-foreground shadow-xs font-bold"
+                          : "hover:bg-muted text-foreground border-border"
+                      }`}
+                    >
+                      {pageNum}
+                    </Button>
+                  )
+                })}
+              </div>
+
+              {/* Next Page */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
+                disabled={page === totalPages || isLoading}
+                title="Next Page"
+                className="h-8 px-2.5 text-xs rounded-xl gap-1 cursor-pointer"
+              >
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+
+              {/* Last Page */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(totalPages)}
+                disabled={page === totalPages || isLoading}
+                title="Last Page"
+                className="h-8 w-8 p-0 text-xs rounded-xl cursor-pointer"
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
             </div>
           )}
-        </div>
-      )}
-
-      {/* PAGINATION CONTROLS */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-4 border-t border-border">
-          <p className="text-xs text-muted-foreground">
-            Page {page} of {totalPages}
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="h-8 text-xs rounded-xl"
-            >
-              <ChevronLeft className="h-3.5 w-3.5 mr-1" />
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="h-8 text-xs rounded-xl"
-            >
-              Next
-              <ChevronRight className="h-3.5 w-3.5 ml-1" />
-            </Button>
-          </div>
         </div>
       )}
 
@@ -974,6 +1153,15 @@ export default function PlacementList({ sharedOwnerId, sharedPermission }: Place
         filters={filters}
         onFiltersChange={setFilters}
         aggregations={aggregations}
+      />
+
+      {/* AI SMART PASTE MODAL */}
+      <SmartPasteModal
+        open={isSmartPasteOpen}
+        onOpenChange={setIsSmartPasteOpen}
+        onPlacementCreated={() => {
+          fetchPlacements();
+        }}
       />
     </div>
   )

@@ -7,16 +7,12 @@ import mongoose from 'mongoose';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     await connectDB();
+    const session = await auth();
 
-    const user = await User.findOne({ email: session.user.email });
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    let user = null;
+    if (session?.user?.email) {
+      user = await User.findOne({ email: session.user.email });
     }
 
     const { searchParams } = new URL(req.url);
@@ -38,20 +34,40 @@ export async function GET(req: NextRequest) {
     // Limit to max 4 for comparison
     const validIds = ids.slice(0, 4);
 
-    const placements = await Placement.find({
-      _id: { $in: validIds },
-      userId: user._id,
-    }).lean();
+    let placements;
+    if (user) {
+      placements = await Placement.find({
+        _id: { $in: validIds },
+        userId: user._id,
+      }).lean();
+
+      // If placements were not found under current user's ID (e.g. shared from a colleague),
+      // allow fetching public placement details without sensitive email fields
+      if (placements.length === 0) {
+        placements = await Placement.find({
+          _id: { $in: validIds },
+        })
+          .select('-emailBody -emailFrom -emailSubject')
+          .lean();
+      }
+    } else {
+      // Unauthenticated access from another browser or incognito window
+      placements = await Placement.find({
+        _id: { $in: validIds },
+      })
+        .select('-emailBody -emailFrom -emailSubject')
+        .lean();
+    }
 
     return NextResponse.json({
       placements,
       userProfile: {
-        skills: user.profile?.skills || [],
-        cgpa: user.profile?.cgpa,
-        branch: user.profile?.branch,
-        graduationYear: user.profile?.graduationYear,
-        targetRole: user.profile?.targetRole,
-        preferredLocation: user.profile?.preferredLocation,
+        skills: user?.profile?.skills || [],
+        cgpa: user?.profile?.cgpa,
+        branch: user?.profile?.branch,
+        graduationYear: user?.profile?.graduationYear,
+        targetRole: user?.profile?.targetRole,
+        preferredLocation: user?.profile?.preferredLocation,
       },
     });
   } catch (error) {

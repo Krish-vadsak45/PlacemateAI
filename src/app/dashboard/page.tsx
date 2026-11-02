@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import connectDB from "@/lib/mongodb"
 import Placement from "@/models/Placement"
+import User from "@/models/User"
+import mongoose from "mongoose"
 import PlacementList from "@/components/PlacementList"
 import GmailMonitorToggle from "@/components/GmailMonitorToggle"
 import DashboardSwitcher from "@/components/DashboardSwitcher"
@@ -57,17 +59,31 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
 
   try {
     await connectDB()
+
+    let targetUserId: any = effectiveUserId
+    if (session.user?.email) {
+      const dbUser = await User.findOne({
+        $or: [
+          ...(mongoose.Types.ObjectId.isValid(effectiveUserId) ? [{ _id: new mongoose.Types.ObjectId(effectiveUserId) }] : []),
+          { email: session.user.email.toLowerCase().trim() },
+        ],
+      }).select('_id').lean()
+      if (dbUser?._id) {
+        targetUserId = dbUser._id
+      }
+    }
+
     const now = new Date()
 
     const [total, highMatch, deadlines, applied, selected] = await Promise.all([
-      Placement.countDocuments({ userId: effectiveUserId }),
-      Placement.countDocuments({ userId: effectiveUserId, matchScore: { $gte: 80 } }),
-      Placement.countDocuments({ userId: effectiveUserId, applicationDeadline: { $gte: now } }),
+      Placement.countDocuments({ userId: targetUserId }),
+      Placement.countDocuments({ userId: targetUserId, matchScore: { $gte: 80 } }),
+      Placement.countDocuments({ userId: targetUserId, applicationDeadline: { $gte: now } }),
       Placement.countDocuments({ 
-        userId: effectiveUserId, 
+        userId: targetUserId, 
         status: { $in: ['APPLIED', 'ASSESSMENT_SCHEDULED', 'INTERVIEW_SCHEDULED', 'SELECTED'] } 
       }),
-      Placement.countDocuments({ userId: effectiveUserId, status: 'SELECTED' }),
+      Placement.countDocuments({ userId: targetUserId, status: 'SELECTED' }),
     ])
 
     totalPlacements = total

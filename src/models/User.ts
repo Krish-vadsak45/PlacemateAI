@@ -37,6 +37,7 @@ export interface IUser extends Document {
     accentColor?: string;
     highContrast?: boolean;
   };
+  savedPlacements?: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -101,6 +102,12 @@ const UserSchema = new Schema<IUser>(
       accentColor: { type: String, default: 'default' },
       highContrast: { type: Boolean, default: false },
     },
+    savedPlacements: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Placement',
+      },
+    ],
   },
   {
     timestamps: true,

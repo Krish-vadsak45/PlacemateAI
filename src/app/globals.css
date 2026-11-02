@@ -371,6 +371,20 @@ html.high-contrast:not(.dark) {
   box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.45), 0 0 25px 0 color-mix(in oklch, var(--primary) 20%, transparent), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.4);
 }
 
+/* Ensure dialogs/modals always retain viewport fixed positioning and do not tilt */
+[data-slot="dialog-content"].glass-3d-card,
+.fixed.glass-3d-card {
+  position: fixed !important;
+  transform: translate(-50%, -50%) !important;
+  transform-style: flat !important;
+  will-change: auto !important;
+}
+
+[data-slot="dialog-content"].glass-3d-card:hover,
+.fixed.glass-3d-card:hover {
+  transform: translate(-50%, -50%) !important;
+}
+
 .glass-3d-pill {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%);
   backdrop-filter: blur(10px) saturate(140%);
@@ -538,4 +552,140 @@ html.high-contrast:not(.dark) {
 
 ::-webkit-scrollbar-thumb:hover {
   background: color-mix(in oklch, var(--muted-foreground) 55%, transparent);
+}
+
+/* Print Media Styles */
+@media print {
+  @page {
+    margin: 10mm;
+    size: auto;
+  }
+  
+  *,
+  *::before,
+  *::after {
+    color: #0f172a !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+  
+  html, body {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .print\:block {
+    display: block !important;
+  }
+
+  .mesh-orb,
+  header,
+  nav,
+  footer {
+    display: none !important;
+  }
+
+  /* Cards & Containers */
+  .glass-3d-card,
+  .glass-3d-panel,
+  .glass-panel,
+  .bg-card,
+  .bg-muted,
+  .bg-background {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    backdrop-filter: none !important;
+    color: #0f172a !important;
+  }
+
+  /* Typography */
+  h1, h2, h3, h4, h5, h6 {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+  }
+
+  p, span, div, label, li, a {
+    color: #1e293b !important;
+  }
+
+  .text-muted-foreground,
+  .text-zinc-500,
+  .text-zinc-600 {
+    color: #475569 !important;
+  }
+
+  /* Tables */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  th, td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 8px 10px !important;
+    color: #0f172a !important;
+    background: #ffffff !important;
+  }
+
+  th {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+  }
+
+  /* Reset sticky positioning for print */
+  .sticky,
+  .fixed {
+    position: static !important;
+  }
+
+  .overflow-x-auto,
+  .overflow-hidden {
+    overflow: visible !important;
+  }
+
+  /* Status Badges & Chips */
+  span[class*="rounded-full"],
+  span[class*="rounded-md"] {
+    border: 1px solid #cbd5e1 !important;
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+    font-weight: 600 !important;
+  }
+
+  /* Highlight best match & top CTC in print */
+  .bg-amber-500\/5,
+  .bg-amber-500\/10,
+  .bg-emerald-500\/5,
+  .bg-emerald-500\/10 {
+    background-color: #fef3c7 !important;
+    color: #92400e !important;
+  }
+
+  /* Match score progress bar */
+  .bg-muted {
+    background-color: #e2e8f0 !important;
+  }
 }

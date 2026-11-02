@@ -34,11 +34,17 @@ interface PlacementItemData {
 }
 
 interface PlacementComparisonChartsProps {
-  placements: PlacementItemData[];
+  placements: any[];
+  userProfile?: {
+    skills?: string[];
+    cgpa?: number;
+    branch?: string;
+  };
 }
 
 export default function PlacementComparisonCharts({
   placements,
+  userProfile = {},
 }: PlacementComparisonChartsProps) {
   // Parse numeric CTC (e.g. "12 LPA", "₹18.5 LPA", "25000/mo") for bar chart
   const parseCtcNumeric = (packageStr?: string): number => {
@@ -73,10 +79,60 @@ export default function PlacementComparisonCharts({
   const radarData = categories.map((cat) => {
     const entry: Record<string, any> = { category: cat.name };
     placements.forEach((p) => {
-      const breakdown = p.matchBreakdown;
-      entry[p.companyName] = breakdown
-        ? (breakdown as any)[cat.key] || p.matchScore || 50
-        : p.matchScore || 60;
+      let score = 0;
+      if (p.matchBreakdown && (p.matchBreakdown as any)[cat.key]) {
+        score = (p.matchBreakdown as any)[cat.key];
+      } else {
+        // Dynamically compute real fit metric from actual criteria
+        const userSkills = (userProfile?.skills || []).map((s: string) => s.toLowerCase());
+        const reqSkills = (p.jobRequirements?.requiredSkills || []).map((s: string) => s.toLowerCase());
+        const userCgpa = userProfile?.cgpa;
+        const reqCgpa = p.eligibility?.minimumCGPA;
+        const userBranch = userProfile?.branch?.toLowerCase();
+        const allowedBranches = (p.eligibility?.allowedBranches || []).map((b: string) => b.toLowerCase());
+
+        switch (cat.key) {
+          case 'skillsMatch':
+            if (reqSkills.length > 0) {
+              const matchedCount = reqSkills.filter((s: string) => userSkills.includes(s)).length;
+              score = Math.round((matchedCount / reqSkills.length) * 100);
+            } else {
+              score = p.matchScore || 80;
+            }
+            break;
+          case 'cgpaMatch':
+            if (reqCgpa) {
+              if (userCgpa !== undefined) {
+                score = userCgpa >= reqCgpa ? 100 : Math.round(Math.max(40, (userCgpa / reqCgpa) * 90));
+              } else {
+                score = 80;
+              }
+            } else {
+              score = 100;
+            }
+            break;
+          case 'branchMatch':
+            if (allowedBranches.length > 0) {
+              if (userBranch && allowedBranches.some((b: string) => b.includes(userBranch) || userBranch.includes(b))) {
+                score = 100;
+              } else {
+                score = 60;
+              }
+            } else {
+              score = 100;
+            }
+            break;
+          case 'locationMatch':
+            score = p.location && p.location !== 'Not specified' ? 90 : 65;
+            break;
+          case 'experienceMatch':
+            score = p.matchScore || 75;
+            break;
+          default:
+            score = p.matchScore || 75;
+        }
+      }
+      entry[p.companyName] = Math.min(100, Math.max(20, score));
     });
     return entry;
   });

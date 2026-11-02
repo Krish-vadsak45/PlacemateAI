@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo, Suspense } from 'react';
+import React, { useEffect, useState, useMemo, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useComparison } from '@/context/ComparisonContext';
 import PlacementComparisonCharts from '@/components/placement/PlacementComparisonCharts';
@@ -23,10 +23,17 @@ import {
   GraduationCap,
   FileText,
   Building2,
+  DollarSign,
   Plus,
   Trash2,
   RotateCcw,
+  Check,
+  ChevronDown,
+  Download,
+  FileSpreadsheet,
+  FileCode,
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
@@ -77,6 +84,20 @@ function ComparisonPageContent() {
   const [userProfile, setUserProfile] = useState<UserProfile>({});
   const [loading, setLoading] = useState(true);
   const [savedModalOpen, setSavedModalOpen] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
+  const exportDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(e.target as Node)) {
+        setExportDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const idsParam = searchParams.get('ids') || '';
 
@@ -123,14 +144,242 @@ function ComparisonPageContent() {
     }
   };
 
-  const handleShareLink = () => {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url);
-    toast.success('Shareable link copied to clipboard!');
+  const handleShareLink = async () => {
+    if (activeIds.length === 0 || placements.length === 0) {
+      toast.warning('No placements selected to share.');
+      return;
+    }
+
+    setIsSharing(true);
+    let shareUrl = `${window.location.origin}/placements/compare?ids=${activeIds.join(',')}`;
+
+    try {
+      // Create public share snapshot like ChatGPT public share chats
+      const res = await fetch('/api/placements/compare/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          placementIds: activeIds,
+          placements,
+          userProfile,
+          title: placements.map((p) => p.companyName).join(' vs '),
+        }),
+      });
+
+      if (res.ok) {
+        const shareData = await res.json();
+        if (shareData.shareId) {
+          // Always prioritize current browser origin so the link matches ngrok/domain exactly
+          shareUrl = `${window.location.origin}/placements/compare/share/${shareData.shareId}`;
+        } else if (shareData.shareUrl) {
+          shareUrl = shareData.shareUrl;
+        }
+      }
+    } catch (apiErr) {
+      console.warn('Dedicated share creation failed, falling back to direct URL', apiErr);
+    } finally {
+      setIsSharing(false);
+    }
+
+    // On mobile devices, check if native Web Share is supported
+    if (typeof navigator !== 'undefined' && navigator.share && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+      try {
+        await navigator.share({
+          title: 'Placement Comparison | PlaceMate',
+          text: `Compare ${placements.map((p) => p.companyName).join(' vs ')} on PlaceMate`,
+          url: shareUrl,
+        });
+        toast.success('Public comparison link shared!');
+        return;
+      } catch (err: any) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+
+    let success = false;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareUrl);
+        success = true;
+      }
+    } catch (err) {
+      console.warn('Clipboard writeText failed, trying fallback', err);
+    }
+
+    if (!success) {
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = shareUrl;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        success = document.execCommand('copy');
+        textArea.remove();
+      } catch (fallbackErr) {
+        console.error('Fallback copy failed', fallbackErr);
+      }
+    }
+
+    if (success) {
+      setCopiedLink(true);
+      toast.success('Public share link copied to clipboard!', {
+        description: 'Anyone with this link can view this comparison in any browser without logging in.',
+      });
+      setTimeout(() => setCopiedLink(false), 2500);
+    } else {
+      window.prompt('Copy this public share link:', shareUrl);
+    }
   };
 
   const handlePrint = () => {
+    if (placements.length === 0) {
+      toast.warning('Select placements to print.');
+      return;
+    }
     window.print();
+  };
+
+  const handleExportExcel = () => {
+    if (placements.length === 0) {
+      toast.warning('Select placements to export.');
+      return;
+    }
+
+    try {
+      const data = placements.map((p) => ({
+        'Company Name': p.companyName,
+        'Job Role': p.jobRole,
+        'Package / CTC': p.package || 'Not specified',
+        'Location': p.location || 'Not specified',
+        'Status': p.status ? p.status.replace(/_/g, ' ') : 'N/A',
+        'Minimum CGPA Cutoff': p.eligibility?.minimumCGPA ?? 'No cutoff',
+        'Allowed Branches': p.eligibility?.allowedBranches?.length
+          ? p.eligibility.allowedBranches.join(', ')
+          : 'All Branches',
+        'AI Match Score': p.matchScore ? `${p.matchScore}%` : 'N/A',
+        'Required Skills': p.jobRequirements?.requiredSkills?.length
+          ? p.jobRequirements.requiredSkills.join(', ')
+          : 'None listed',
+        'Preferred Skills': p.jobRequirements?.preferredSkills?.length
+          ? p.jobRequirements.preferredSkills.join(', ')
+          : 'None listed',
+        'Application Deadline': p.applicationDeadline
+          ? new Date(p.applicationDeadline).toLocaleDateString()
+          : 'No deadline',
+        'Assessment / Interview Date': p.interviewDate
+          ? new Date(p.interviewDate).toLocaleDateString()
+          : p.assessmentDate
+          ? new Date(p.assessmentDate).toLocaleDateString()
+          : 'To be announced',
+        'Application Link': p.applicationLink || 'None provided',
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Placement Comparison');
+      XLSX.writeFile(workbook, `placemate-comparison-${new Date().toISOString().slice(0, 10)}.xlsx`);
+      toast.success('Excel comparison spreadsheet downloaded!');
+    } catch (err: any) {
+      console.error('Failed to export Excel file:', err);
+      toast.error('Failed to export Excel file');
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (placements.length === 0) {
+      toast.warning('Select placements to export.');
+      return;
+    }
+
+    try {
+      const headers = [
+        'Company Name',
+        'Job Role',
+        'Package / CTC',
+        'Location',
+        'Status',
+        'Minimum CGPA',
+        'Allowed Branches',
+        'AI Match Score',
+        'Required Skills',
+        'Preferred Skills',
+        'Application Deadline',
+        'Assessment / Interview Date',
+        'Application Link',
+      ];
+
+      const escapeCsv = (val: any) => {
+        const str = String(val ?? '');
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+
+      const rows = placements.map((p) => [
+        escapeCsv(p.companyName),
+        escapeCsv(p.jobRole),
+        escapeCsv(p.package || 'Not specified'),
+        escapeCsv(p.location || 'Not specified'),
+        escapeCsv(p.status ? p.status.replace(/_/g, ' ') : 'N/A'),
+        escapeCsv(p.eligibility?.minimumCGPA ?? 'No cutoff'),
+        escapeCsv(p.eligibility?.allowedBranches?.join('; ') || 'All Branches'),
+        escapeCsv(p.matchScore ? `${p.matchScore}%` : 'N/A'),
+        escapeCsv(p.jobRequirements?.requiredSkills?.join('; ') || 'None listed'),
+        escapeCsv(p.jobRequirements?.preferredSkills?.join('; ') || 'None listed'),
+        escapeCsv(p.applicationDeadline ? new Date(p.applicationDeadline).toLocaleDateString() : 'No deadline'),
+        escapeCsv(
+          p.interviewDate
+            ? new Date(p.interviewDate).toLocaleDateString()
+            : p.assessmentDate
+            ? new Date(p.assessmentDate).toLocaleDateString()
+            : 'To be announced'
+        ),
+        escapeCsv(p.applicationLink || 'None provided'),
+      ]);
+
+      const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `placemate-comparison-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('CSV comparison sheet downloaded!');
+    } catch (err: any) {
+      console.error('Failed to export CSV:', err);
+      toast.error('Failed to export CSV file');
+    }
+  };
+
+  const handleExportJSON = () => {
+    if (placements.length === 0) {
+      toast.warning('Select placements to export.');
+      return;
+    }
+
+    try {
+      const jsonContent = JSON.stringify(placements, null, 2);
+      const blob = new Blob([jsonContent], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `placemate-comparison-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('JSON dataset downloaded!');
+    } catch (err: any) {
+      console.error('Failed to export JSON:', err);
+      toast.error('Failed to export JSON file');
+    }
   };
 
   const removePlacementFromView = (id: string) => {
@@ -164,13 +413,93 @@ function ComparisonPageContent() {
     return Math.max(...placements.map((p) => parseCtcNumeric(p.package)));
   }, [placements]);
 
+  const comparisonKpis = useMemo(() => {
+    if (placements.length === 0) return null;
+
+    let topCtc = 0;
+    let topCtcCompany = '';
+    let topCtcRaw = 'N/A';
+    placements.forEach((p) => {
+      const num = parseCtcNumeric(p.package);
+      if (num > topCtc) {
+        topCtc = num;
+        topCtcCompany = p.companyName;
+        topCtcRaw = p.package || `${num} LPA`;
+      }
+    });
+
+    let topMatch = 0;
+    let topMatchCompany = '';
+    placements.forEach((p) => {
+      if ((p.matchScore || 0) > topMatch) {
+        topMatch = p.matchScore || 0;
+        topMatchCompany = p.companyName;
+      }
+    });
+
+    const now = Date.now();
+    let earliestDeadline: Date | null = null;
+    let earliestCompany = '';
+    placements.forEach((p) => {
+      if (p.applicationDeadline) {
+        const d = new Date(p.applicationDeadline);
+        if (d.getTime() > now) {
+          if (!earliestDeadline || d.getTime() < earliestDeadline.getTime()) {
+            earliestDeadline = d;
+            earliestCompany = p.companyName;
+          }
+        }
+      }
+    });
+
+    const userCgpa = userProfile.cgpa;
+    const userBranch = userProfile.branch?.toLowerCase();
+    let eligibleCount = 0;
+    placements.forEach((p) => {
+      const reqCgpa = p.eligibility?.minimumCGPA;
+      const branches = (p.eligibility?.allowedBranches || []).map((b) => b.toLowerCase());
+      const cgpaOk = !reqCgpa || (userCgpa !== undefined && userCgpa >= reqCgpa);
+      const branchOk = branches.length === 0 || (userBranch && branches.some((b) => b.includes(userBranch) || userBranch.includes(b)));
+      if (cgpaOk && branchOk) eligibleCount++;
+    });
+
+    return {
+      topCtc: topCtcRaw !== 'N/A' ? topCtcRaw : topCtc > 0 ? `₹${topCtc} LPA` : 'Not specified',
+      topCtcCompany,
+      topMatch: topMatch > 0 ? `${topMatch}%` : 'N/A',
+      topMatchCompany,
+      earliestDeadline: earliestDeadline ? (earliestDeadline as Date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'All active',
+      earliestCompany,
+      eligibleCount,
+      totalCount: placements.length,
+    };
+  }, [placements, userProfile]);
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col relative">
       {/* 3D Mesh Glow Orbs */}
-      <div className="mesh-orb top-[-100px] left-1/3 w-[600px] h-[450px] bg-gradient-to-tr from-sky-500/15 via-blue-600/10 to-transparent" />
-      <div className="mesh-orb top-[40%] right-[-100px] w-[500px] h-[500px] bg-gradient-to-br from-purple-500/15 via-pink-500/10 to-transparent" />
+      <div className="mesh-orb top-[-100px] left-1/3 w-[600px] h-[450px] bg-gradient-to-tr from-sky-500/15 via-blue-600/10 to-transparent print:hidden" />
+      <div className="mesh-orb top-[40%] right-[-100px] w-[500px] h-[500px] bg-gradient-to-br from-purple-500/15 via-pink-500/10 to-transparent print:hidden" />
 
-      <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl print:p-0 print:max-w-none preserve-3d">
+      <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl print:p-0 print:max-w-none">
+        {/* Printable Document Header (shown only when printing / saving PDF) */}
+        {placements.length > 0 && (
+          <div className="hidden print:block mb-6 border-b border-zinc-300 pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl font-black text-black tracking-tight font-heading">PlaceMate</span>
+                  <span className="text-xs text-zinc-500 font-semibold">• Campus Placement Co-Pilot</span>
+                </div>
+                <h2 className="text-lg font-bold text-black mt-1">Placement Comparison Matrix Report</h2>
+                <p className="text-xs text-zinc-600 mt-0.5">
+                  Comparing: {placements.map((p) => p.companyName).join(' vs ')} • Generated {new Date().toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header Bar */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 print:hidden">
           <div className="flex items-center gap-3">
@@ -204,21 +533,121 @@ function ComparisonPageContent() {
               variant="outline"
               size="sm"
               onClick={handleShareLink}
-              className="rounded-xl border-border text-xs font-semibold"
+              disabled={placements.length === 0 || isSharing}
+              className={`rounded-xl border-border text-xs font-semibold transition-all ${
+                copiedLink ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' : ''
+              }`}
             >
-              <Share2 className="h-3.5 w-3.5 mr-1.5" />
-              Share Link
+              {isSharing ? (
+                <>
+                  <div className="h-3 w-3 mr-1.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  Creating Link...
+                </>
+              ) : copiedLink ? (
+                <>
+                  <Check className="h-3.5 w-3.5 mr-1.5 text-emerald-500" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Share2 className="h-3.5 w-3.5 mr-1.5" />
+                  Share Link
+                </>
+              )}
             </Button>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePrint}
-              className="rounded-xl border-border text-xs font-semibold"
-            >
-              <Printer className="h-3.5 w-3.5 mr-1.5" />
-              Print / Export
-            </Button>
+            {/* Print / Export Dropdown Menu */}
+            <div className="relative" ref={exportDropdownRef}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setExportDropdownOpen((prev) => !prev)}
+                disabled={placements.length === 0}
+                className="rounded-xl border-border text-xs font-semibold gap-1.5"
+              >
+                <Printer className="h-3.5 w-3.5 text-primary" />
+                <span>Print / Export</span>
+                <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform duration-200 ${exportDropdownOpen ? 'rotate-180' : ''}`} />
+              </Button>
+
+              {exportDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-card/95 backdrop-blur-xl border border-border/80 shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                    Export & Print Options
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExportDropdownOpen(false);
+                      handlePrint();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left hover:bg-muted/80 transition-colors group cursor-pointer"
+                  >
+                    <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <Printer className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-foreground">Print / Save as PDF</div>
+                      <div className="text-[10px] text-muted-foreground">Printable matrix sheet</div>
+                    </div>
+                  </button>
+
+                  <div className="h-px bg-border/60 my-1" />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExportDropdownOpen(false);
+                      handleExportExcel();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left hover:bg-muted/80 transition-colors group cursor-pointer"
+                  >
+                    <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <FileSpreadsheet className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-foreground">Export to Excel (.xlsx)</div>
+                      <div className="text-[10px] text-muted-foreground">Formatted spreadsheet</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExportDropdownOpen(false);
+                      handleExportCSV();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left hover:bg-muted/80 transition-colors group cursor-pointer"
+                  >
+                    <div className="h-8 w-8 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <Download className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-foreground">Export to CSV (.csv)</div>
+                      <div className="text-[10px] text-muted-foreground">Comma-separated values</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExportDropdownOpen(false);
+                      handleExportJSON();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left hover:bg-muted/80 transition-colors group cursor-pointer"
+                  >
+                    <div className="h-8 w-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <FileCode className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-foreground">Export JSON (.json)</div>
+                      <div className="text-[10px] text-muted-foreground">Raw structured dataset</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -262,10 +691,53 @@ function ComparisonPageContent() {
         {/* Comparison Table / Matrix View */}
         {!loading && placements.length >= 2 && (
           <div className="space-y-8">
+            {/* Real Comparison KPI Highlights */}
+            {comparisonKpis && (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 print:grid-cols-4">
+                <div className="glass-panel p-4 rounded-2xl border border-border shadow-2xs space-y-1">
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Top Compensation</span>
+                    <DollarSign className="h-4 w-4 text-emerald-500" />
+                  </div>
+                  <div className="text-xl font-extrabold text-foreground truncate">{comparisonKpis.topCtc}</div>
+                  <p className="text-[11px] text-muted-foreground truncate">{comparisonKpis.topCtcCompany || 'Across drives'}</p>
+                </div>
+
+                <div className="glass-panel p-4 rounded-2xl border border-border shadow-2xs space-y-1">
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Top Match Score</span>
+                    <Sparkles className="h-4 w-4 text-indigo-500" />
+                  </div>
+                  <div className="text-xl font-extrabold text-foreground">{comparisonKpis.topMatch}</div>
+                  <p className="text-[11px] text-muted-foreground truncate">{comparisonKpis.topMatchCompany || 'Best alignment'}</p>
+                </div>
+
+                <div className="glass-panel p-4 rounded-2xl border border-border shadow-2xs space-y-1">
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Next Deadline</span>
+                    <Clock className="h-4 w-4 text-blue-500" />
+                  </div>
+                  <div className="text-xl font-extrabold text-foreground truncate">{comparisonKpis.earliestDeadline}</div>
+                  <p className="text-[11px] text-muted-foreground truncate">{comparisonKpis.earliestCompany || 'All active'}</p>
+                </div>
+
+                <div className="glass-panel p-4 rounded-2xl border border-border shadow-2xs space-y-1">
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Full Eligibility</span>
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  </div>
+                  <div className="text-xl font-extrabold text-foreground">
+                    {comparisonKpis.eligibleCount} of {comparisonKpis.totalCount}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">Meets CGPA & branch criteria</p>
+                </div>
+              </div>
+            )}
+
             {/* Spec Matrix Table */}
-            <div className="glass-3d-card rounded-2xl border border-border/80 overflow-hidden shadow-2xl">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[700px]">
+            <div className="glass-3d-card rounded-2xl border border-border/80 overflow-hidden shadow-2xl print:border-zinc-300 print:shadow-none print:rounded-none">
+              <div className="overflow-x-auto print:overflow-visible">
+                <table className="w-full text-left border-collapse min-w-[700px] print:min-w-0 print:w-full">
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
                       <th className="p-4 w-56 text-xs font-bold uppercase tracking-wider text-muted-foreground sticky left-0 bg-card/95 backdrop-blur z-10 border-r border-border">
@@ -553,10 +1025,14 @@ function ComparisonPageContent() {
             </div>
 
             {/* Visual Comparison Charts */}
-            <PlacementComparisonCharts placements={placements} />
+            <PlacementComparisonCharts placements={placements} userProfile={userProfile} />
 
             {/* AI Decision Analysis */}
-            <AiComparisonCard placementIds={activeIds} />
+            <AiComparisonCard
+              placementIds={activeIds}
+              placements={placements}
+              userProfile={userProfile}
+            />
           </div>
         )}
 

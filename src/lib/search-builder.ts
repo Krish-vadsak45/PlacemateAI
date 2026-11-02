@@ -14,6 +14,8 @@ export interface SearchFilters {
   deadlineTo?: string
   hasAttachments?: boolean
   hasCalendarEvent?: boolean
+  saved?: boolean
+  savedIds?: string[]
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
   page?: number
@@ -46,6 +48,11 @@ export function buildSearchQuery(filters: SearchFilters, userId: string): any {
 
   // Always filter by userId
   filter.push({ term: { userId } })
+
+  // Filter by saved placement IDs if specified
+  if (filters.savedIds?.length) {
+    filter.push({ ids: { values: filters.savedIds } })
+  }
 
   // Text search query
   if (filters.q) {

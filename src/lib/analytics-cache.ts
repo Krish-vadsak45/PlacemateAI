@@ -1,10 +1,10 @@
-import { getRedisClient } from './search-cache'
+import { getConnectedRedisClient } from './search-cache'
 
 const ANALYTICS_CACHE_TTL = 300 // 5 minutes
 
 export async function getCachedAnalytics<T>(userId: string, cacheKey: string): Promise<T | null> {
   try {
-    const client = getRedisClient()
+    const client = await getConnectedRedisClient()
     if (!client || !client.isOpen) return null
 
     const key = `analytics:${userId}:${cacheKey}`
@@ -25,7 +25,7 @@ export async function setCachedAnalytics(
   ttl: number = ANALYTICS_CACHE_TTL
 ): Promise<void> {
   try {
-    const client = getRedisClient()
+    const client = await getConnectedRedisClient()
     if (!client || !client.isOpen) return
 
     const key = `analytics:${userId}:${cacheKey}`
@@ -37,7 +37,7 @@ export async function setCachedAnalytics(
 
 export async function invalidateAnalyticsCache(userId: string): Promise<void> {
   try {
-    const client = getRedisClient()
+    const client = await getConnectedRedisClient()
     if (!client || !client.isOpen) return
 
     const pattern = `analytics:${userId}:*`

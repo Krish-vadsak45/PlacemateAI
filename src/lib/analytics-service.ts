@@ -132,16 +132,28 @@ export async function computeDashboardAnalytics(
 ): Promise<DashboardAnalyticsData> {
   await connectDB()
 
-  const userObjectId = new mongoose.Types.ObjectId(userId)
+  let user: any = null
+  if (mongoose.Types.ObjectId.isValid(userId)) {
+    user = await User.findById(userId).select('profile email').lean()
+  }
+  if (!user) {
+    user = await User.findOne({
+      $or: [
+        { email: userId.toLowerCase().trim() },
+        { 'profile.email': userId.toLowerCase().trim() },
+      ],
+    }).select('profile email').lean()
+  }
+
+  const effectiveUserId = user?._id || (mongoose.Types.ObjectId.isValid(userId) ? new mongoose.Types.ObjectId(userId) : null)
   const dateQuery = getDateFilter(range, customStart, customEnd)
 
-  const [placements, user] = await Promise.all([
-    Placement.find({
-      userId: userObjectId,
-      ...dateQuery,
-    }).lean(),
-    User.findById(userObjectId).select('profile').lean(),
-  ])
+  const placements = effectiveUserId
+    ? await Placement.find({
+        userId: effectiveUserId,
+        ...dateQuery,
+      }).lean()
+    : []
 
   const userSkills = (user?.profile?.skills || []).map((s: string) => s.trim().toLowerCase())
   const userCgpa = user?.profile?.cgpa || 0

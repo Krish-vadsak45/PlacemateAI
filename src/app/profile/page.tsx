@@ -40,6 +40,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const toastShownRef = useRef(false)
+  const isInitialized = useRef(false)
 
   const {
     register,
@@ -93,7 +94,8 @@ export default function ProfilePage() {
   }, [status, router])
 
   useEffect(() => {
-    if (session?.user) {
+    if (session?.user && !isInitialized.current) {
+      isInitialized.current = true
       reset({
         fullName: session.user.name || "",
         email: session.user.email || "",
@@ -407,7 +409,9 @@ export default function ProfilePage() {
                 name="skills"
                 control={control}
                 render={({ field }) => {
-                  const skillsArray = field.value
+                  const skillsArray = Array.isArray(field.value)
+                    ? field.value
+                    : typeof field.value === "string"
                     ? field.value.split(",").map((s: string) => s.trim()).filter(Boolean)
                     : []
                   return (

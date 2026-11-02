@@ -7,8 +7,11 @@ import { SessionProvider } from "@/components/session-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { initializeChangeStream } from "@/lib/change-stream";
 import { ComparisonProvider } from "@/context/ComparisonContext";
+import { SavedPlacementsProvider } from "@/context/SavedPlacementsContext";
+import { NotificationProvider } from "@/context/NotificationContext";
 import CompareFloatingBar from "@/components/placement/CompareFloatingBar";
 import { KeyboardShortcutsProvider } from "@/components/KeyboardShortcutsProvider";
+import { auth } from "@/lib/auth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,7 +33,9 @@ if (typeof window === 'undefined') {
   initializeChangeStream()
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth();
+
   return (
     <html
       lang="en"
@@ -38,15 +43,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <SessionProvider>
+        <SessionProvider session={session}>
           <ThemeProvider defaultTheme="system" storageKey="placemate-theme">
             <ComparisonProvider>
-              <KeyboardShortcutsProvider>
-                <Navbar />
-                <main className="flex-1">{children}</main>
-                <CompareFloatingBar />
-                <Toaster />
-              </KeyboardShortcutsProvider>
+              <SavedPlacementsProvider>
+                <NotificationProvider>
+                  <KeyboardShortcutsProvider>
+                    <Navbar />
+                    <main className="flex-1">{children}</main>
+                    <CompareFloatingBar />
+                    <Toaster />
+                  </KeyboardShortcutsProvider>
+                </NotificationProvider>
+              </SavedPlacementsProvider>
             </ComparisonProvider>
           </ThemeProvider>
         </SessionProvider>
@@ -54,4 +63,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-

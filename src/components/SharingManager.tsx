@@ -182,7 +182,7 @@ export default function SharingManager() {
           </span>
         )}
       </DialogTrigger>
-      <DialogContent className="glass-3d-card sm:max-w-lg max-h-[85vh] overflow-y-auto border-0">
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto bg-card/95 backdrop-blur-xl border border-border/80 shadow-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5 text-primary" />

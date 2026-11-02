@@ -3,17 +3,20 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, User, LogOut, LogIn, Briefcase, BarChart3, Users, Scale, Keyboard } from "lucide-react"
+import { LayoutDashboard, User, LogOut, LogIn, Briefcase, BarChart3, Users, Scale, Keyboard, Bookmark } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { signOut, useSession } from "next-auth/react"
 import { useComparison } from "@/context/ComparisonContext"
+import { useSavedPlacements } from "@/context/SavedPlacementsContext"
 import { useKeyboardShortcutsContext } from "@/components/KeyboardShortcutsProvider"
+import NotificationBell from "@/components/NotificationBell"
 
 export default function Navbar() {
   const { data: session } = useSession()
   const pathname = usePathname()
   const router = useRouter()
   const { selectedItems } = useComparison()
+  const { savedCount } = useSavedPlacements()
   const { openHelpModal } = useKeyboardShortcutsContext()
 
   const handleSignOut = async () => {
@@ -21,12 +24,13 @@ export default function Navbar() {
   }
 
   const isCompareActive = pathname?.startsWith("/placements/compare")
-  const isDashboardActive = (pathname?.startsWith("/dashboard") || pathname?.startsWith("/placements")) && !isCompareActive
+  const isSavedActive = pathname === "/placements/saved"
+  const isDashboardActive = (pathname?.startsWith("/dashboard") || pathname?.startsWith("/placements")) && !isCompareActive && !isSavedActive
   const isAnalyticsActive = pathname?.startsWith("/analytics")
   const isProfileActive = pathname === "/profile"
 
   return (
-    <header className="sticky top-2 z-50 w-full max-w-7xl mx-auto px-3 sm:px-6 transition-all">
+    <header className="sticky top-2 z-50 w-full max-w-7xl mx-auto px-3 sm:px-6 transition-all print:hidden">
       <div className="glass-3d-panel flex h-14 items-center justify-between px-4 sm:px-6">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
@@ -61,6 +65,25 @@ export default function Navbar() {
                 >
                   <LayoutDashboard className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">Dashboard</span>
+                </Button>
+              </Link>
+              <Link href="/placements/saved">
+                <Button
+                  variant={isSavedActive ? "default" : "ghost"}
+                  size="sm"
+                  className={`h-8 gap-1.5 text-xs font-medium rounded-lg transition-all relative ${
+                    isSavedActive
+                      ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Bookmark className={`h-3.5 w-3.5 ${savedCount > 0 ? "fill-amber-400 text-amber-500" : ""}`} />
+                  <span className="hidden sm:inline">Saved</span>
+                  {savedCount > 0 && (
+                    <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500 text-white">
+                      {savedCount}
+                    </span>
+                  )}
                 </Button>
               </Link>
               <Link href="/placements/compare">
@@ -120,11 +143,12 @@ export default function Navbar() {
               size="sm"
               onClick={openHelpModal}
               className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground gap-1.5 rounded-lg border border-transparent hover:border-border"
-              title="Keyboard Shortcuts (Press ?)"
+              title="Keyboard Shortcuts (Press Ctrl + /)"
             >
               <Keyboard className="h-3.5 w-3.5" />
-              <kbd className="hidden lg:inline-flex font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-muted border border-border text-foreground">?</kbd>
+              <kbd className="hidden lg:inline-flex font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-muted border border-border text-foreground">Ctrl + /</kbd>
             </Button>
+            {session?.user && <NotificationBell />}
             <ThemeToggle />
 
             {session?.user ? (

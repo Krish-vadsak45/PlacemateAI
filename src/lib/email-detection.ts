@@ -20,7 +20,7 @@ export class EmailDetectionService {
   private placementKeywords: string[]
 
   constructor(placementCellEmail: string) {
-    this.placementCellEmail = placementCellEmail.toLowerCase()
+    this.placementCellEmail = (placementCellEmail || "").trim().toLowerCase()
     this.placementKeywords = [
       "placement",
       "job",
@@ -47,7 +47,7 @@ export class EmailDetectionService {
    * Tertiary filter: Keyword matching in subject/body
    */
   isPlacementEmail(email: EmailData): EmailDetectionResult {
-    const fromEmail = this.extractEmail(email.from).toLowerCase()
+    const fromEmail = this.extractEmail(email.from).toLowerCase().trim()
     
     // Exclude Google Calendar notifications
     if (fromEmail.includes('calendar-notification@google.com') || 
@@ -59,9 +59,19 @@ export class EmailDetectionService {
         reason: "Google Calendar notification excluded",
       }
     }
+
+    // Support comma or semicolon separated list of configured placement emails
+    const targetEmails = this.placementCellEmail
+      .split(/[,;\s]+/)
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean)
     
-    // Primary filter: Direct match with placement cell email
-    if (fromEmail === this.placementCellEmail) {
+    // Primary filter: Direct match with placement cell email(s)
+    const matchesDirectly = targetEmails.some(
+      (target) => fromEmail === target || fromEmail.includes(target) || target.includes(fromEmail)
+    )
+
+    if (matchesDirectly) {
       return {
         isPlacementEmail: true,
         confidence: 1.0,
@@ -70,13 +80,16 @@ export class EmailDetectionService {
     }
 
     // Secondary filter: Domain match (same domain as placement cell)
-    const placementDomain = this.extractDomain(this.placementCellEmail)
     const senderDomain = this.extractDomain(fromEmail)
+    const matchesDomain = targetEmails.some((target) => {
+      const placementDomain = this.extractDomain(target)
+      return placementDomain && senderDomain && placementDomain === senderDomain
+    })
     
-    if (placementDomain && senderDomain && placementDomain === senderDomain) {
+    if (matchesDomain) {
       // Check for placement keywords if same domain
       const keywordScore = this.checkKeywords(email.subject + " " + email.body)
-      if (keywordScore > 0.3) {
+      if (keywordScore > 0.2) {
         return {
           isPlacementEmail: true,
           confidence: 0.8 + (keywordScore * 0.2),

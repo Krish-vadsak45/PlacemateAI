@@ -9,6 +9,7 @@ import { attachmentParser } from "./attachment-parser"
 import connectDB from "./mongodb"
 import User from "@/models/User"
 import Placement from "@/models/Placement"
+import { createNotification } from "./notification-service"
 
 export interface ProcessingResult {
   success: boolean
@@ -319,6 +320,29 @@ export class EmailProcessor {
         )
 
         console.log(`Match score calculated: ${matchResult.score}/100`)
+
+        // Trigger in-app notification for new placement or top match
+        if (isNew) {
+          createNotification({
+            userId: this.userId,
+            title: `New Placement Drive: ${placement.companyName}`,
+            message: `${placement.companyName} is hiring for ${placement.jobRole} (${placement.package || 'Package details inside'}). Application is now open!`,
+            type: 'NEW_DRIVE',
+            link: `/placements/${placement._id}`,
+            placementId: placement._id,
+          }).catch((err) => console.warn('Failed to send new drive notification:', err))
+        }
+
+        if (matchResult.score >= 80) {
+          createNotification({
+            userId: this.userId,
+            title: `Top Match: ${placement.companyName} (${matchResult.score}%)`,
+            message: `Your profile is an exceptional ${matchResult.score}% match for ${placement.companyName}'s ${placement.jobRole} role!`,
+            type: 'HIGH_MATCH',
+            link: `/placements/${placement._id}`,
+            placementId: placement._id,
+          }).catch((err) => console.warn('Failed to send high match notification:', err))
+        }
       } catch (matchError) {
         console.error("Failed to calculate match score:", matchError)
         // Don't fail the entire process if matching fails

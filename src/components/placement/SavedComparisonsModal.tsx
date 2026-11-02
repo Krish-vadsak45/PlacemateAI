@@ -1,15 +1,24 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Bookmark, Trash2, ExternalLink, Plus, Check, Loader2, X } from 'lucide-react';
+import { Bookmark, Trash2, ExternalLink, Plus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface SavedComparisonsModalProps {
   currentPlacementIds: string[];
   onLoadComparison: (ids: string[]) => void;
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  open?: boolean;
+  onClose?: () => void;
+  onOpenChange?: (open: boolean) => void;
 }
 
 interface SavedItem {
@@ -28,8 +37,16 @@ export default function SavedComparisonsModal({
   currentPlacementIds,
   onLoadComparison,
   isOpen,
+  open,
   onClose,
+  onOpenChange,
 }: SavedComparisonsModalProps) {
+  const isModalOpen = open ?? isOpen ?? false;
+  const handleClose = () => {
+    onClose?.();
+    onOpenChange?.(false);
+  };
+
   const [savedList, setSavedList] = useState<SavedItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -37,10 +54,10 @@ export default function SavedComparisonsModal({
   const [showSaveForm, setShowSaveForm] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isModalOpen) {
       fetchSavedComparisons();
     }
-  }, [isOpen]);
+  }, [isModalOpen]);
 
   const fetchSavedComparisons = async () => {
     setLoading(true);
@@ -108,27 +125,24 @@ export default function SavedComparisonsModal({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in-0">
-      <div className="glass-3d-card w-full max-w-lg p-6 rounded-2xl shadow-2xl">
-        <div className="flex items-center justify-between pb-4 border-b border-border">
+    <Dialog open={isModalOpen} onOpenChange={(openVal) => { if (!openVal) handleClose(); }}>
+      <DialogContent className="max-w-lg bg-card/95 backdrop-blur-xl p-6 border border-border shadow-2xl rounded-2xl">
+        <DialogHeader className="pb-4 border-b border-border">
           <div className="flex items-center gap-2">
             <Bookmark className="h-5 w-5 text-primary" />
-            <h3 className="font-bold text-base text-foreground">Saved Placement Sets</h3>
+            <DialogTitle className="font-bold text-base text-foreground font-heading">
+              Saved Placement Sets
+            </DialogTitle>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+          <DialogDescription className="text-xs text-muted-foreground">
+            Manage and reload your saved placement comparison views
+          </DialogDescription>
+        </DialogHeader>
 
         {/* Save Current Section */}
         {currentPlacementIds.length >= 2 && (
-          <div className="my-4 p-3.5 rounded-xl border border-primary/20 bg-primary/5">
+          <div className="my-2 p-3.5 rounded-xl border border-primary/20 bg-primary/5">
             {!showSaveForm ? (
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-foreground">
@@ -177,7 +191,7 @@ export default function SavedComparisonsModal({
         )}
 
         {/* Saved List */}
-        <div className="space-y-3 max-h-72 overflow-y-auto pr-1 my-4">
+        <div className="space-y-3 max-h-72 overflow-y-auto pr-1 my-2 custom-scrollbar">
           {loading ? (
             <div className="py-8 text-center text-xs text-muted-foreground">
               Loading saved comparisons...
@@ -194,7 +208,7 @@ export default function SavedComparisonsModal({
                   key={item._id}
                   onClick={() => {
                     onLoadComparison(ids);
-                    onClose();
+                    handleClose();
                   }}
                   className="p-3 rounded-xl border border-border hover:border-primary/50 bg-muted/20 hover:bg-muted/50 transition-all cursor-pointer flex items-center justify-between group"
                 >
@@ -223,7 +237,7 @@ export default function SavedComparisonsModal({
             })
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

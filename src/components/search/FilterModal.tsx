@@ -17,7 +17,8 @@ import {
   CalendarCheck,
   RotateCcw,
   Check,
-  Tag as TagIcon
+  Tag as TagIcon,
+  Bookmark
 } from "lucide-react"
 import { format, addDays } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -130,6 +131,7 @@ export default function FilterModal({
       deadlineTo: undefined,
       hasAttachments: undefined,
       hasCalendarEvent: undefined,
+      saved: undefined,
       tags: undefined,
     }
     setLocalFilters(resetFilters)
@@ -581,10 +583,37 @@ export default function FilterModal({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-bold text-foreground">Calendar Event Synced</div>
-                  <div className="text-[11px] text-muted-foreground truncate">Saved to Google Calendar</div>
+                                    <div className="text-[11px] text-muted-foreground truncate">Saved to Google Calendar</div>
                 </div>
                 {localFilters.hasCalendarEvent && (
                   <Check className="h-4 w-4 text-foreground shrink-0" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setLocalFilters({ ...localFilters, saved: !localFilters.saved })}
+                className={cn(
+                  "flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all cursor-pointer sm:col-span-2",
+                  localFilters.saved
+                    ? "border-amber-500/50 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                    : "border-border bg-card hover:bg-muted/40"
+                )}
+              >
+                <div className={cn(
+                  "h-8 w-8 rounded-lg flex items-center justify-center shrink-0 border",
+                  localFilters.saved
+                    ? "bg-amber-500 text-white border-transparent"
+                    : "bg-muted text-muted-foreground border-border"
+                )}>
+                  <Bookmark className={cn("h-4 w-4", localFilters.saved && "fill-white")} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-bold text-foreground">Saved Placements Only</div>
+                  <div className="text-[11px] text-muted-foreground truncate">Only display your shortlisted dream drives</div>
+                </div>
+                {localFilters.saved && (
+                  <Check className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
                 )}
               </button>
             </div>

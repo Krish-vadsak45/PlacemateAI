@@ -10,18 +10,21 @@ import mongoose from 'mongoose';
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     await connectDB();
 
-    const user = await User.findOne({ email: session.user.email });
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    let user: any = null;
+    if (session?.user?.email) {
+      user = await User.findOne({
+        $or: [
+          ...(session.user.id && mongoose.Types.ObjectId.isValid(session.user.id)
+            ? [{ _id: new mongoose.Types.ObjectId(session.user.id) }]
+            : []),
+          { email: session.user.email.toLowerCase().trim() },
+        ],
+      }).lean();
     }
 
-    const { placementIds } = await req.json();
+    const { placementIds, userProfile: clientProfile } = await req.json();
 
     if (!Array.isArray(placementIds) || placementIds.length < 2) {
       return NextResponse.json(
@@ -34,10 +37,20 @@ export async function POST(req: NextRequest) {
       .slice(0, 4)
       .filter((id) => mongoose.Types.ObjectId.isValid(id));
 
-    const placements = await Placement.find({
-      _id: { $in: validIds },
-      userId: user._id,
-    }).lean();
+    let placements = user
+      ? await Placement.find({
+          _id: { $in: validIds },
+          userId: user._id,
+        }).lean()
+      : [];
+
+    if (placements.length < 2) {
+      placements = await Placement.find({
+        _id: { $in: validIds },
+      })
+        .select('-emailBody -emailFrom -emailSubject')
+        .lean();
+    }
 
     if (placements.length < 2) {
       return NextResponse.json(
@@ -48,10 +61,10 @@ export async function POST(req: NextRequest) {
 
     // Build concise context for AI prompt
     const userProfileSummary = {
-      skills: user.profile?.skills || [],
-      cgpa: user.profile?.cgpa || 'N/A',
-      branch: user.profile?.branch || 'N/A',
-      targetRole: user.profile?.targetRole || 'Software Engineer',
+      skills: user?.profile?.skills || clientProfile?.skills || [],
+      cgpa: user?.profile?.cgpa || clientProfile?.cgpa || 'N/A',
+      branch: user?.profile?.branch || clientProfile?.branch || 'N/A',
+      targetRole: user?.profile?.targetRole || 'Software Engineer',
     };
 
     const placementDataList = placements.map((p) => ({

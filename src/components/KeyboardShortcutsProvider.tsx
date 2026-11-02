@@ -42,7 +42,24 @@ export function KeyboardShortcutsProvider({ children }: { children: React.ReactN
 
       const isCmdOrCtrl = e.metaKey || e.ctrlKey
 
-      // Global Cmd/Ctrl combinations (works even inside inputs)
+      // Escape always closes any open shortcut modals
+      if (e.key === "Escape") {
+        setIsHelpOpen(false)
+        setIsThemeOpen(false)
+        return
+      }
+
+      // Help Modal: Ctrl + / or Ctrl + ? (or single '?' when not in an input)
+      if (
+        (isCmdOrCtrl && (e.key === "/" || e.key === "?")) ||
+        (!isCmdOrCtrl && !isInput && e.key === "?")
+      ) {
+        e.preventDefault()
+        setIsHelpOpen((prev) => !prev)
+        return
+      }
+
+      // Ctrl/Cmd + K: Focus Search (allowed inside and outside inputs)
       if (isCmdOrCtrl && e.key.toLowerCase() === "k") {
         e.preventDefault()
         const searchInput = document.querySelector<HTMLInputElement>("input[type='text'], input[type='search']")
@@ -55,70 +72,94 @@ export function KeyboardShortcutsProvider({ children }: { children: React.ReactN
         return
       }
 
-      if (isCmdOrCtrl && e.key.toLowerCase() === "n") {
-        e.preventDefault()
-        const newBtn = document.querySelector<HTMLButtonElement>("[data-shortcut-new]")
-        if (newBtn) {
-          newBtn.click()
-        } else {
-          router.push("/dashboard")
-        }
-        return
-      }
-
-      // Ignore single-key shortcuts if inside an editable input
+      // Ignore remaining shortcuts if user is typing inside an editable field
       if (isInput) return
 
-      // Single-key shortcuts
-      switch (e.key) {
-        case "?":
-          e.preventDefault()
-          setIsHelpOpen((prev) => !prev)
-          break
+      // All remaining application shortcuts require Ctrl (or Cmd on macOS)
+      if (!isCmdOrCtrl) return
+
+      const key = e.key.toLowerCase()
+
+      switch (key) {
         case "d":
-        case "D":
+          e.preventDefault()
           if (pathname !== "/dashboard") {
-            e.preventDefault()
             router.push("/dashboard")
-            toast.info("Navigating to Dashboard", { duration: 1200 })
+            toast.info("Navigating to Dashboard (Ctrl + D)", { duration: 1200 })
           }
           break
+
+        case "s":
+          e.preventDefault()
+          if (pathname !== "/placements/saved") {
+            router.push("/placements/saved")
+            toast.info("Navigating to Saved Placements (Ctrl + S)", { duration: 1200 })
+          }
+          break
+
         case "p":
-        case "P":
+          e.preventDefault()
           if (pathname !== "/profile") {
-            e.preventDefault()
             router.push("/profile")
-            toast.info("Navigating to Profile Settings", { duration: 1200 })
+            toast.info("Navigating to Profile Settings (Ctrl + P)", { duration: 1200 })
           }
           break
+
         case "a":
-        case "A":
+          // If text is selected on the page, keep native Select All behavior
+          if (typeof window !== "undefined" && window.getSelection()?.toString().length) {
+            return
+          }
+          e.preventDefault()
           if (pathname !== "/analytics") {
-            e.preventDefault()
             router.push("/analytics")
-            toast.info("Navigating to Analytics", { duration: 1200 })
+            toast.info("Navigating to Analytics (Ctrl + A)", { duration: 1200 })
           }
           break
+
         case "c":
-        case "C":
+          // If text is highlighted on the page, preserve standard Copy
+          if (typeof window !== "undefined" && window.getSelection()?.toString().trim().length) {
+            return
+          }
+          e.preventDefault()
           if (!pathname?.startsWith("/placements/compare")) {
-            e.preventDefault()
             router.push("/placements/compare")
-            toast.info("Navigating to Drive Comparison", { duration: 1200 })
+            toast.info("Navigating to Drive Comparison (Ctrl + C)", { duration: 1200 })
           }
           break
+
+        case "i":
+          e.preventDefault()
+          if (pathname !== "/notifications") {
+            router.push("/notifications")
+            toast.info("Navigating to Notification Hub (Ctrl + I)", { duration: 1200 })
+          }
+          break
+
         case "h":
-        case "H":
+          e.preventDefault()
           if (pathname !== "/") {
-            e.preventDefault()
             router.push("/")
+            toast.info("Navigating to Home (Ctrl + H)", { duration: 1200 })
           }
           break
+
+        case "n":
+          e.preventDefault()
+          const newBtn = document.querySelector<HTMLButtonElement>("[data-shortcut-new]")
+          if (newBtn) {
+            newBtn.click()
+          } else {
+            router.push("/dashboard")
+          }
+          break
+
         case "t":
-        case "T":
           e.preventDefault()
           setIsThemeOpen((prev) => !prev)
           break
+
         default:
           break
       }

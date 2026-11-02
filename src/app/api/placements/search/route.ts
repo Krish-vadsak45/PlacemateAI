@@ -3,7 +3,9 @@ import { auth } from '@/lib/auth'
 import { searchPlacements, SearchFilters } from '@/lib/search-builder'
 import SearchLog from '@/models/SearchLog'
 import Placement from '@/models/Placement'
+import User from '@/models/User'
 import connectDB from '@/lib/mongodb'
+import mongoose from 'mongoose'
 import { generateCacheKey, getCachedSearch, cacheSearch } from '@/lib/search-cache'
 import { checkSharedAccess, resolveOwnerId } from '@/lib/shared-access'
 
@@ -30,6 +32,33 @@ export async function GET(request: Request) {
     const effectiveUserId = access.effectiveUserId
 
     const { searchParams } = new URL(request.url)
+    const savedOnly = searchParams.get('saved') === 'true'
+
+    let savedIds: string[] | undefined = undefined
+    if (savedOnly) {
+      await connectDB()
+      const userDoc = await User.findOne({
+        $or: [
+          ...(mongoose.Types.ObjectId.isValid(effectiveUserId)
+            ? [{ _id: new mongoose.Types.ObjectId(effectiveUserId) }]
+            : []),
+          ...(session.user?.email
+            ? [{ email: session.user.email.toLowerCase().trim() }]
+            : []),
+        ],
+      }).select('savedPlacements').lean()
+
+      savedIds = (userDoc?.savedPlacements || []).map((id: any) => id.toString())
+      if (savedIds.length === 0) {
+        return NextResponse.json({
+          success: true,
+          placements: [],
+          total: 0,
+          page: 1,
+          limit: parseInt(searchParams.get('limit') || '20'),
+        })
+      }
+    }
 
     // Build filters from query parameters
     const filters: SearchFilters = {
@@ -46,6 +75,8 @@ export async function GET(request: Request) {
       deadlineTo: searchParams.get('deadlineTo') || undefined,
       hasAttachments: searchParams.get('hasAttachments') === 'true' ? true : searchParams.get('hasAttachments') === 'false' ? false : undefined,
       hasCalendarEvent: searchParams.get('hasCalendarEvent') === 'true' ? true : searchParams.get('hasCalendarEvent') === 'false' ? false : undefined,
+      saved: savedOnly,
+      savedIds: savedIds,
       sortBy: searchParams.get('sortBy') || undefined,
       sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
       page: searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1,
@@ -75,6 +106,12 @@ export async function GET(request: Request) {
       await connectDB()
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const query: any = { userId: effectiveUserId }
+      if (filters.savedIds?.length) {
+        const objectIds = filters.savedIds
+          .filter((id) => mongoose.Types.ObjectId.isValid(id))
+          .map((id) => new mongoose.Types.ObjectId(id))
+        query._id = { $in: objectIds }
+      }
       if (filters.status?.length) query.status = { $in: filters.status }
       if (filters.tags?.length) query.tags = { $in: filters.tags }
       if (filters.company?.length) query.companyName = { $in: filters.company }
